@@ -245,6 +245,42 @@ elif T_grade >= 60:
     print("HMMM! You got a D")
 else:
     print("Better luck next time, Its F")
+ 
+# --------------------------------------------------------------------------------------------------- 
+# Q5  [Hard]   FizzBuzz: Print numbers 1–100, but 'Fizz' for multiples of 3, 'Buzz' for 5, 'FizzBuzz' for both.
+
+for n in range(1,101):
+    if n % 3 == 0 and n % 5 == 0:
+        n = "FizzBuzz"
+    elif n % 3 == 0:
+        n = "Fizz"
+    elif n % 5 == 0:
+        n = 'Buzz'
+    print(n)
+
+# different approach same thing:
+for n in range(1, 101):  
+    if n % 3 == 0 and n % 5 == 0:
+        print("FizzBuzz")
+    elif n % 3 == 0:
+        print("Fizz")
+    elif n % 5 == 0:
+        print("Buzz")
+    else:
+        print(n)
+     
+# --------------------------------------------------------------------------------------------------- 
+# Q6  [Hard]   Given a year, determine if it's a leap year using proper Gregorian rules.
+year = int(input("enter a year to check the leap year: "))
+
+if year % 400 == 0:
+    print("it is leap year")
+elif year % 100 == 0:
+    print("it is not a leap year")
+elif year % 4 == 0:
+    print("it is a leap year")
+else:
+    print("it is not a leap year")
 
 # ---------------------------------------------------------------------------------------------------
 # Q7  [Easy]   Reverse a string using slicing only (no built-in reverse).
