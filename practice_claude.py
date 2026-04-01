@@ -804,3 +804,31 @@ print(list_methods.count('Ujjwal'))
 print(list_methods)
 
 # Q60 [Hard]   Implement your own version of str.split() and str.join() without using the built-in methods.
+str_func = 'hello world-government'
+list_string = []
+
+def is_split(deli):
+    temp = ''
+    for char in str_func:
+        if char == deli:
+            list_string.append(temp)
+            temp = ''
+        else:
+            temp = temp + char
+
+    list_string.append(temp)
+    print(list_string)
+
+
+def is_join(deli):
+    join_string = ''
+    for element in range(len(list_string)):
+        if element == len(list_string) - 1:
+            join_string = join_string + list_string[element]
+        else:
+            join_string = join_string + list_string[element] + deli
+
+    print(join_string)
+
+is_split(deli = ' ')
+is_join(deli = '-')
