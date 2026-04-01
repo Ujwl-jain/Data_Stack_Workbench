@@ -701,4 +701,106 @@ final_dict = {**buy_dict, **stock_dict}
 
 print(final_dict)
 
+# Q40 [Medium] Count word frequency in a sentence and return the top 3 most common words.
+str_count = 'I am ujjwal jain, and I am 24 years old, i am in love with love python, studies, and games'
+
+dict_freq = {}
+count_k = 0
+
+for word in str_count.lower().split():
+    if word not in dict_freq:
+        dict_freq[word] = 1
+    else:
+        dict_freq[word] += 1
+dict_sort = sorted(dict_freq.items(), key = lambda x:x[1], reverse = True)
+
+print(dict_sort[0:3])
+
+# Q41 [Medium] Group a list of words by their first letter using a dictionary.
+
+str_word = 'Data Scine, data analyst, data validation is the course of my direction value of this certification are vaybig'
+
+dict_group = {}
+for words in str_word.lower().split():
+    if words[0] not in dict_group:
+        dict_group[words[0]] = [words]
+    else:
+        dict_group[words[0]].append(words)
+
+print(dict_group)
+
+'''
+first step is to excess the string convert it into list of words using split doing lower as well
+second step is to excess that list and put the words in a list of words in that dictonary as value and its first char as key
+for exmple if the word is data {'d' : [data]},
+now how to append into the same list into dictonary, if the first word is same using if else
+if word.split()[0] not in dict_group, then add it with the list of its value
+else:
+append in the value of list if it exist 
+'''
+# Q46 [Easy]   Find the sum of all digits of a number using a while loop.
+
+# using for loop - wrong code according to the question, correct working
+list1 = [5,1,40,20,199,4,19,77]
+sum = 0
+sum1 = 0
+for n in list1:
+    sum = sum + n
+
+print(f'the sum of all the numbers in list is: {sum}')
+
+# using while loop actual code of that question
+num = int(input("enter a more than 3 digit number: "))
+total = 0
+while num>0:
+    digit = num%10
+    total = total + digit
+    num = num // 10
+
+print(total)
+
+
+# Q50 [Hard]   Implement bubble sort using nested loops and count the number of swaps made.
+
+unsorted_lst = [3,2,1,4]
+swap_count = 0  
+
+for element in range(len(unsorted_lst)-1):
+    for ele in range(len(unsorted_lst) - 1 - element):
+        if unsorted_lst[ele] > unsorted_lst[ele+1]:
+            swap_count += 1
+            unsorted_lst[ele], unsorted_lst[ele+1] = unsorted_lst[ele+1],  unsorted_lst[ele]
+        
+print(unsorted_lst, 'and', swap_count)
+
+# Q51 [Hard]   Find all Armstrong numbers between 1 and 1000 using loops (e.g. 153 = 1³+5³+3³).
+
+list_armstrong= []
+for i in range (1,1001):
+    digit = str(i)
+    container = 0
+    power = len(digit)
+    for char in digit:
+        container = container + (int(char)**power)
+    
+    if container == i:
+        list_armstrong.append(i)
+        
+print(list_armstrong)
+
+# Q59 [Medium] Use list methods: append, extend, insert, remove, pop, sort, reverse, index, count.
+
+list_methods = ['Ujjwal', 'jain', 59, True, False, 'I am ujjwal Jain']
+list_methods.append('Mango is a fruit')
+list_methods.extend([1,5,2])
+list_methods.insert(3, 'Yeahhhh')
+list_methods.remove(59)
+list_methods.pop(1)
+# since sort can not be done cause list contains different data types
+# list_methods.sort()
+list_methods.reverse()
+print(list_methods.index('Yeahhhh'))
+print(list_methods.count('Ujjwal'))
+print(list_methods)
+
 # Q60 [Hard]   Implement your own version of str.split() and str.join() without using the built-in methods.
