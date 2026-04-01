@@ -180,7 +180,42 @@ Q36. Given a list of numbers, classify each as 'small' (< 10),
 
 Q37. Write a function that takes age and returns the life stage:
      'baby' (0-2), 'child' (3-12), 'teen' (13-17),
-     'adult' (18-64), 'senior' (65+).
+     'adult' (18-64), 'senior' (65+). Done
+
+     def age_checker(age):
+    if age >= 3 and age <= 12:
+        return f'You are still a child as your age is {age}'
+    elif age >=13 and age<=17:
+        return f"You are a teen as your age is {age}"
+    elif age>=18 and age<=64:
+        return f"Your are an adult, as your age is {age}"
+    elif age>=65:
+        return f"You are a senior citizen, as your age is {age}"
+    else:
+        return f"Awwwww!! How cute, you just born 'baby' "
+
+age = float(input("Enter the age: "))
+age_result = age_checker(age)
+print(age_result)
+
+# enhanced version:
+
+def age_checker(age):
+    if age < 0:
+        return "Invalid age!"
+    elif age <= 2:
+        return f"Awww!! How cute, you're just a baby at {age}!"
+    elif age <= 12:
+        return f"You are still a child, age {age}"
+    elif age <= 17:
+        return f"You are a teen, age {age}"
+    elif age <= 64:
+        return f"You are an adult, age {age}"
+    else:
+        return f"You are a senior citizen, age {age}"
+
+age = float(input("Enter the age: "))
+print(age_checker(age))
 
 [Hard]
 Q38. Write a function that takes a string representing a date in
