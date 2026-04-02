@@ -282,6 +282,27 @@ else:
 Q39. Write a function that takes a sentence and returns the number of
      words, characters (no spaces), and sentences (count periods).
 
+     def sen_checker(sen):
+    # Splitting by . gives one extra empty string at the end!
+    count_sentence = len(sen.split('.')) - 1
+    words = sen.split(' ')
+    count_word = len(words)
+    count_char = 0
+    for word in words:
+        for char in word:
+            if char.isalnum():
+                count_char += 1
+            else:
+                count_char +=1
+
+    return count_char, count_sentence, count_word
+
+
+
+sen = 'Hi i am ujjwal. i am 24 year old. I may need to take a leave on 3rd april.'
+result_char, result_sen, result_word = sen_checker(sen)
+print(f"the total words are {result_word}, the total char are {result_char} and the total sentences are {result_sen}")
+
 [Medium]
 Q40. Write a function that converts a snake_case string to camelCase.
      Example: "hello_world_python" → "helloWorldPython"
