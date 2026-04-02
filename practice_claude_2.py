@@ -325,6 +325,24 @@ Q42. Write a function that compresses a string using run-length
 Q43. Given a list of integers, return two lists: one with positive
      numbers and one with negative numbers, using list comprehension.
 
+     # using list
+list_No = [1,4,671,-2,15,-5,-19,2,10,-17,9]
+list_n = []
+list_p = []
+for i in list_No:
+    if i >= 0:
+        list_p.append(i)
+    else:
+        list_n.append(i)
+
+print(f'the list of postive number: {list_p} and the list of negative integers: {list_n}')
+
+# using list comprehension
+list_pc= [i for i in list_No if i>=0]
+list_nc = [i for i in list_No if i<0]
+
+print(f'the list of postive number: {list_pc} and the list of negative integers: {list_nc}')
+
 [Medium]
 Q44. Given a list of sentences, return a list of lists where each inner
      list contains the individual words of that sentence.
