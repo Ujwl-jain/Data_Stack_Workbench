@@ -101,7 +101,21 @@ Q34 [Easy]   Swap two variables using tuple packing/unpacking in a single line.
 
 Q35 [Medium] Sort a list of tuples by the second element, then by first element as tiebreaker.
 
+list_tup = [(1, 3), (2, 1), (4, 1), (3, 2)]
+
+final_list = sorted(list_tup, key=lambda x: (x[1], x[0]))
+print(final_list)
+
 Q36 [Medium] Create a named tuple for a 'Student' with fields name, grade, score. Demonstrate usage.
+from collections import namedtuple
+
+Student  = namedtuple('Student', ['name','grade','score'])
+s1 = Student('Ujjwal', 'A', 95)
+
+print(s1.name) 
+print(s1.score) 
+print(type(s1))
+print(s1[0])  
 
 Q37 [Hard]   Given a list of (item, price) tuples, find the most expensive item without using max().
 
