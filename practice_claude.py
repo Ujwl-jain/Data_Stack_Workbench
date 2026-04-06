@@ -179,10 +179,55 @@ Q51 [Hard]   Find all Armstrong numbers between 1 and 1000 using loops (e.g. 153
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Q52 [Easy]   Format a person's info with f-string: name, age, and salary rounded to 2 decimal places.
+age = 24
+Salary = 4500.45146
+
+print(f"My name is {name}, My age is {age}, and my salary is {Salary:.2f}")
 
 Q53 [Easy]   Write a function with a proper docstring that converts Celsius to Fahrenheit.
 
+def doc_string(c):
+    '''
+    Here the goal is to convert the celsius to Fahrenheit
+    basically we can convert it using below formula
+    this function will return the F to the caller
+    '''
+    F = (c * 9/5) + 32
+    return F
+f = doc_string(14)
+print(f)
+
+# enhanced -
+def celsius_to_fahrenheit(c):
+    """
+    Convert temperature from Celsius to Fahrenheit.
+
+    Args:
+        c (float): Temperature in Celsius
+
+    Returns:
+        float: Temperature in Fahrenheit
+    """
+    fahrenheit = (c * 9/5) + 32
+    return fahrenheit
+
+
+f = celsius_to_fahrenheit(14)
+print(f)
+
 Q54 [Medium] Print a formatted table of products (name, qty, price) using f-strings with alignment.
+
+products = [
+    ('Apple',  10000, 'Rs 10/piece'),
+    ('Laptop', 5,     'Rs 80000'),
+    ('Pen',    500,   'Rs 10/piece'),
+]
+
+print(f"{'Name':<12} {'Qty':<10} {'Price':<12}")
+print("-" * 45)
+for name, qty, price in products:    # tuple unpacking!
+    print(f"{name:<12} {qty:<10} {price:<12}")
+
 
 Q55 [Medium] Use f-string to display a progress bar: '████░░░░ 50%' dynamically based on a value.
 
