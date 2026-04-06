@@ -177,3 +177,6 @@ res1 = len(tuple1)
 print(res1)
 
 # we can perform any method from list once we convert the tuple to list.
+
+
+# Namedtuples(need to learn this)
