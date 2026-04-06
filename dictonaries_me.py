@@ -78,6 +78,7 @@ dict_del  = {122 : 45, 123 : 89, 124:69, 167: 78}
 del dict_del[122] #delete the key value pair
 print(dict_del)
 
+collection counter - need to revise this again
 
 # ------------------------------------------ Notes by claude -------------------------------------------
 
