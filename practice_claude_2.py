@@ -364,16 +364,64 @@ Q46. Write a function that takes a list of dictionaries (each with keys
 
 [Easy]
 Q47. Write a function that takes a list of words and returns a
-     dictionary of word lengths: {'word': length}.
+     dictionary of word lengths: {'word': length}. DONE
+
+     def word_count(word_c):
+    dict_final = {}
+    for word in word_c:
+        dict_final[word] = len(word)
+    return dict_final
+
+word_c = ['Mango', 'potato', 'sabji', 'yellow', 'ramen'] 
+result = word_count(word_c)
+print(result)
+
 
 [Medium]
 Q48. Given a list of transactions as dicts with 'name' and 'amount',
      calculate the total amount spent per person.
-     Return as a dictionary {name: total}.
+     Return as a dictionary {name: total}. DONE
+
+     def transcation(banking):
+    final_dict = {}
+    for current_dict in banking:
+        name = current_dict['name']
+        amount = current_dict['amount']
+        if name not in final_dict:
+            final_dict[name] = amount
+        else:
+            final_dict[name] += amount
+
+    return final_dict
+
+banking = [
+    {'name': 'Ujjwal', 'amount': 500},
+    {'name': 'Rahul',  'amount': 300},
+    {'name': 'Ujjwal', 'amount': 200},
+    {'name': 'Rahul',  'amount': 100},
+    {'name': 'Priya',  'amount': 400},
+]
+result = transcation(banking)
+print(result)
 
 Q49. Write a function that takes two dicts and returns a dict of keys
      that are common to both, with a tuple of their values.
-     Example: {'a':1,'b':2}, {'b':3,'c':4} → {'b': (2, 3)}
+     Example: {'a':1,'b':2}, {'b':3,'c':4} → {'b': (2, 3)} DONE
+
+     def dict_filter(a,b):
+    filter_dict = {}
+    for k,v in b.items():
+        if k in a:
+            filter_dict[k] = (a[k],v)
+        else:
+            pass
+    
+    return filter_dict
+
+dict1 = {'name': 'Ujjwal', 'Human': 'No', 'Class' : 'No class'}
+dict2 = {'name': 'Karan', 'Age': 24, 'Class' : 'Interview'}
+result = dict_filter(dict1, dict2)
+print(result)
 
 [Hard]
 Q50. Write a function that converts a flat dictionary with dot-notation
