@@ -434,12 +434,18 @@ Q50. Write a function that converts a flat dictionary with dot-notation
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 [Easy]
-Q51. Print the following pattern using loops:
+Q51. Print the following pattern using loops: DONE
      1
      1 2
      1 2 3
      1 2 3 4
      1 2 3 4 5
+
+for row in range(1,6):
+    for i in range(1,row+1):
+        print(i, end = ' ')
+    print()
+        
 
 [Medium]
 Q52. Write a loop-based function that finds the GCD (greatest common
