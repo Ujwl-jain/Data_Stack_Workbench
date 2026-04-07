@@ -40,7 +40,34 @@ Q5.  Write a function `apply_twice(func, value)` that takes another
 
 Q6.  Write a function `power_factory(exp)` that returns a new function
      which raises any number to the power `exp`. Use closures.
-     Example: square = power_factory(2); square(5) → 25
+     Example: square = power_factory(2); square(5) → 25 DONE
+
+     def power_factory(exp):
+    return square_power(exp, value = 5) 
+
+def square_power(exp, value):
+    square = value ** exp
+    return square
+
+result = power_factory(2)
+print(result)
+
+# or using closure function
+
+def power_factory(exp):
+    def square_power(value):
+        square = value ** exp
+        return square
+    return square_power
+
+square = power_factory(2)
+cube = power_factory(3) 
+fifth = power_factory(5) 
+print(square(5))
+print(cube(4))
+print(fifth(2))
+
+
 
 Q7.  Write a function that accepts **kwargs and prints each key-value
      pair in the format "key: value". Then call it with at least 4
@@ -120,12 +147,65 @@ Q22. Implement a simple spell checker using sets. Given a dictionary
 [Easy]
 Q23. Write a recursive function to compute the factorial of n.
      factorial(0) = 1, factorial(n) = n * factorial(n-1).
+     def factorial(num):
+    if num == 0 or num == 1:
+        return 1
+    else:
+        return (num * factorial(num-1))
+
+result = factorial(5)
+print(result)
 
 Q24. Write a recursive function to compute the nth Fibonacci number.
-     fib(0) = 0, fib(1) = 1, fib(n) = fib(n-1) + fib(n-2).
+     fib(0) = 0, fib(1) = 1, fib(n) = fib(n-1) + fib(n-2). DONE
+
+     def fibonacci(n):
+        if n == 0:
+            return 0
+        elif n == 1:
+            return 1
+        else:
+            return fibonacci(n-1) + fibonacci(n-2)
+
+result = fibonacci(10)
+print(result)
+
+# using loop + recursion list of fibonacci 
+
+def fib(n):
+    if n == 0:
+        return 0
+    elif n == 1:
+        return 1
+    else:
+        return fib(n-1) + fib(n-2)
+
+
+def fibonacci(n):
+    result = []
+    
+    for i in range(n+1):
+        result.append(fib(i))
+    
+    return result
+
+print(fibonacci(10))
+
 
 Q25. Write a recursive function that computes the sum of all elements
-     in a list without using any built-in sum() function.
+     in a list without using any built-in sum() function. DONE
+
+     def sum_list(list_sum):
+    if len(list_sum) == 0:
+        return 0
+    else:
+        total = list_sum[0] + sum_list(list_sum[1:])
+        return total
+
+list_sum = [1,2,34,5]
+print(sum_list(list_sum))
+
+
 
 Q26. Write a recursive function `count_down(n)` that prints numbers
      from n down to 0, then prints "Go!".
