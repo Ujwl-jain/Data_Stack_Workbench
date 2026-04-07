@@ -286,6 +286,83 @@ print(result)           # None
 
 
 # ============================================================
+# TOPIC: Closures in Python
+# ============================================================
+
+# WHAT IS A CLOSURE?
+# A closure is a function that remembers variables from its
+# outer function even after the outer function has finished.
+
+# STRUCTURE:
+# def outer(x):
+#     def inner(y):
+#         return x + y      # inner can use x from outer
+#     return inner          # return the function, not the result
+
+# KEY RULE:
+# Return the inner function itself (no brackets)
+# NOT the result of calling it (brackets = result)
+#   return inner       correct - returns the function
+#   return inner()     wrong   - returns the result
+
+
+# ============================================================
+# EXAMPLE: power_factory
+# ============================================================
+
+def power_factory(exp):
+    def square_power(value):
+        square = value ** exp   # exp is remembered from outer
+        return square
+    return square_power         # returning the function itself
+
+
+square = power_factory(2)   # square is now square_power with exp=2
+cube   = power_factory(3)   # cube   is now square_power with exp=3
+fifth  = power_factory(5)   # fifth  is now square_power with exp=5
+
+print(square(5))   # 25
+print(cube(4))     # 64
+print(fifth(2))    # 32
+
+
+# ============================================================
+# HOW IT WORKS (plain English)
+# ============================================================
+
+# 1. power_factory(2) is called, exp = 2
+# 2. square_power is created, it remembers exp = 2
+# 3. square_power is returned and stored in variable square
+# 4. square(5) is called → runs square_power(5) with exp=2
+# 5. returns 5 ** 2 = 25
+
+
+# ============================================================
+# CLOSURE vs RECURSION
+# ============================================================
+
+# Closure    - outer function returns an inner function
+# Recursion  - a function calls itself
+
+# They both involve functions inside functions but are different concepts.
+
+
+# ============================================================
+# COMMON MISTAKE
+# ============================================================
+
+# WRONG - hardcoded value, returns a number not a function
+# def power_factory(exp):
+#     return square_power(exp, value=5)   # returns 25, not a function
+
+# RIGHT - return the inner function so caller decides the value
+# def power_factory(exp):
+#     def square_power(value):
+#         return value ** exp
+#     return square_power
+
+
+# ============================================================
 #                    QUICK REFERENCE SUMMARY
 # ============================================================
 #
