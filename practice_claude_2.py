@@ -548,17 +548,17 @@ Q54. Write a function using loops that generates Pascal's Triangle up
 
 [Easy]
 Q55. Write a function that takes a list of numbers and returns a tuple
-     of (min, max, sum, average) of the list.
+     of (min, max, sum, average) of the list. DONE
 
 [Medium]
 Q56. Given a list of (student, subject, score) tuples, return a
      dictionary grouping scores by student:
-     {'Alice': [85, 90], 'Bob': [78]}
+     {'Alice': [85, 90], 'Bob': [78]} DONE
 
 [Hard]
 Q57. Write a function that takes a list of coordinate tuples (x, y)
      and returns them sorted first by x, then by y, then returns only
-     the unique coordinates (no duplicates).
+     the unique coordinates (no duplicates). DONE
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
