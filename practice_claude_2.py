@@ -42,33 +42,6 @@ Q6.  Write a function `power_factory(exp)` that returns a new function
      which raises any number to the power `exp`. Use closures.
      Example: square = power_factory(2); square(5) → 25 DONE
 
-     def power_factory(exp):
-    return square_power(exp, value = 5) 
-
-def square_power(exp, value):
-    square = value ** exp
-    return square
-
-result = power_factory(2)
-print(result)
-
-# or using closure function
-
-def power_factory(exp):
-    def square_power(value):
-        square = value ** exp
-        return square
-    return square_power
-
-square = power_factory(2)
-cube = power_factory(3) 
-fifth = power_factory(5) 
-print(square(5))
-print(cube(4))
-print(fifth(2))
-
-
-
 Q7.  Write a function that accepts **kwargs and prints each key-value
      pair in the format "key: value". Then call it with at least 4
      different keyword arguments.
@@ -146,66 +119,12 @@ Q22. Implement a simple spell checker using sets. Given a dictionary
 
 [Easy]
 Q23. Write a recursive function to compute the factorial of n.
-     factorial(0) = 1, factorial(n) = n * factorial(n-1).
-     def factorial(num):
-    if num == 0 or num == 1:
-        return 1
-    else:
-        return (num * factorial(num-1))
 
-result = factorial(5)
-print(result)
 
 Q24. Write a recursive function to compute the nth Fibonacci number.
-     fib(0) = 0, fib(1) = 1, fib(n) = fib(n-1) + fib(n-2). DONE
-
-     def fibonacci(n):
-        if n == 0:
-            return 0
-        elif n == 1:
-            return 1
-        else:
-            return fibonacci(n-1) + fibonacci(n-2)
-
-result = fibonacci(10)
-print(result)
-
-# using loop + recursion list of fibonacci 
-
-def fib(n):
-    if n == 0:
-        return 0
-    elif n == 1:
-        return 1
-    else:
-        return fib(n-1) + fib(n-2)
-
-
-def fibonacci(n):
-    result = []
-    
-    for i in range(n+1):
-        result.append(fib(i))
-    
-    return result
-
-print(fibonacci(10))
-
-
+     
 Q25. Write a recursive function that computes the sum of all elements
      in a list without using any built-in sum() function. DONE
-
-     def sum_list(list_sum):
-    if len(list_sum) == 0:
-        return 0
-    else:
-        total = list_sum[0] + sum_list(list_sum[1:])
-        return total
-
-list_sum = [1,2,34,5]
-print(sum_list(list_sum))
-
-
 
 Q26. Write a recursive function `count_down(n)` that prints numbers
      from n down to 0, then prints "Go!".
@@ -262,97 +181,12 @@ Q37. Write a function that takes age and returns the life stage:
      'baby' (0-2), 'child' (3-12), 'teen' (13-17),
      'adult' (18-64), 'senior' (65+). Done
 
-     def age_checker(age):
-    if age >= 3 and age <= 12:
-        return f'You are still a child as your age is {age}'
-    elif age >=13 and age<=17:
-        return f"You are a teen as your age is {age}"
-    elif age>=18 and age<=64:
-        return f"Your are an adult, as your age is {age}"
-    elif age>=65:
-        return f"You are a senior citizen, as your age is {age}"
-    else:
-        return f"Awwwww!! How cute, you just born 'baby' "
-
-age = float(input("Enter the age: "))
-age_result = age_checker(age)
-print(age_result)
-
-# enhanced version:
-
-def age_checker(age):
-    if age < 0:
-        return "Invalid age!"
-    elif age <= 2:
-        return f"Awww!! How cute, you're just a baby at {age}!"
-    elif age <= 12:
-        return f"You are still a child, age {age}"
-    elif age <= 17:
-        return f"You are a teen, age {age}"
-    elif age <= 64:
-        return f"You are an adult, age {age}"
-    else:
-        return f"You are a senior citizen, age {age}"
-
-age = float(input("Enter the age: "))
-print(age_checker(age))
-
+     
 [Hard]
 Q38. Write a function that takes a string representing a date in
      "DD/MM/YYYY" format and validates it: check valid day, month,
      year ranges and whether the day is valid for that specific month
      (account for leap years too). DONE
-
-     def year_check(year):
-
-    if year % 400 == 0:
-        return True
-    elif year % 100 == 0:
-        return False
-    elif year % 4 == 0:
-        return True
-    else:
-        return False
-
-def date_checker(dmy):
-    list_date = dmy.split('/')
-    # since this is confirmed according to the format we can just store the date inside a variable:
-    day = int(list_date[0])
-    month = int(list_date[1])
-    year = int(list_date[2])
-    day_list = [0,31,28,31,30,31,30,31,31,30,31,30,31]
-    if month not in range(1,13):
-        return 'Invalid Month'
-    else:
-        print('Valid Month - continue')
-        if year < 1:
-            return 'Invalid Year'
-        elif year_check(year) is False:
-            print('Valid Year - checking leap or not')
-            if day < 1 or day > day_list[month]: 
-                return 'Invalid Date'
-            else:
-                print('valid date')
-                return 'Valid Date'
-        elif year_check(year) is True:
-            if year_check(year) and month == 2:
-                max_days = 29
-            else:
-                max_days = day_list[month]
-            if day <1 or day > max_days:
-                return 'Invalid date'
-            else:
-                return 'Valid Date'
-
-dmy = input("Enter a year in format DD/MM/YYYY: ")
-if len(dmy.split('/')) != 3:
-    print(dmy)
-    print('invalid date')
-else:
-    result_date = date_checker(dmy)
-    print(result_date)
-
-
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  5. STRINGS  (new problems)
@@ -361,27 +195,6 @@ else:
 [Easy]
 Q39. Write a function that takes a sentence and returns the number of
      words, characters (no spaces), and sentences (count periods).
-
-     def sen_checker(sen):
-    # Splitting by . gives one extra empty string at the end!
-    count_sentence = len(sen.split('.')) - 1
-    words = sen.split(' ')
-    count_word = len(words)
-    count_char = 0
-    for word in words:
-        for char in word:
-            if char.isalnum():
-                count_char += 1
-            else:
-                count_char +=1
-
-    return count_char, count_sentence, count_word
-
-
-
-sen = 'Hi i am ujjwal. i am 24 year old. I may need to take a leave on 3rd april.'
-result_char, result_sen, result_word = sen_checker(sen)
-print(f"the total words are {result_word}, the total char are {result_char} and the total sentences are {result_sen}")
 
 [Medium]
 Q40. Write a function that converts a snake_case string to camelCase.
@@ -405,24 +218,6 @@ Q42. Write a function that compresses a string using run-length
 Q43. Given a list of integers, return two lists: one with positive
      numbers and one with negative numbers, using list comprehension.
 
-     # using list
-list_No = [1,4,671,-2,15,-5,-19,2,10,-17,9]
-list_n = []
-list_p = []
-for i in list_No:
-    if i >= 0:
-        list_p.append(i)
-    else:
-        list_n.append(i)
-
-print(f'the list of postive number: {list_p} and the list of negative integers: {list_n}')
-
-# using list comprehension
-list_pc= [i for i in list_No if i>=0]
-list_nc = [i for i in list_No if i<0]
-
-print(f'the list of postive number: {list_pc} and the list of negative integers: {list_nc}')
-
 [Medium]
 Q44. Given a list of sentences, return a list of lists where each inner
      list contains the individual words of that sentence.
@@ -445,63 +240,14 @@ Q46. Write a function that takes a list of dictionaries (each with keys
 [Easy]
 Q47. Write a function that takes a list of words and returns a
      dictionary of word lengths: {'word': length}. DONE
-
-     def word_count(word_c):
-    dict_final = {}
-    for word in word_c:
-        dict_final[word] = len(word)
-    return dict_final
-
-word_c = ['Mango', 'potato', 'sabji', 'yellow', 'ramen'] 
-result = word_count(word_c)
-print(result)
-
-
 [Medium]
 Q48. Given a list of transactions as dicts with 'name' and 'amount',
      calculate the total amount spent per person.
      Return as a dictionary {name: total}. DONE
 
-     def transcation(banking):
-    final_dict = {}
-    for current_dict in banking:
-        name = current_dict['name']
-        amount = current_dict['amount']
-        if name not in final_dict:
-            final_dict[name] = amount
-        else:
-            final_dict[name] += amount
-
-    return final_dict
-
-banking = [
-    {'name': 'Ujjwal', 'amount': 500},
-    {'name': 'Rahul',  'amount': 300},
-    {'name': 'Ujjwal', 'amount': 200},
-    {'name': 'Rahul',  'amount': 100},
-    {'name': 'Priya',  'amount': 400},
-]
-result = transcation(banking)
-print(result)
-
 Q49. Write a function that takes two dicts and returns a dict of keys
      that are common to both, with a tuple of their values.
      Example: {'a':1,'b':2}, {'b':3,'c':4} → {'b': (2, 3)} DONE
-
-     def dict_filter(a,b):
-    filter_dict = {}
-    for k,v in b.items():
-        if k in a:
-            filter_dict[k] = (a[k],v)
-        else:
-            pass
-    
-    return filter_dict
-
-dict1 = {'name': 'Ujjwal', 'Human': 'No', 'Class' : 'No class'}
-dict2 = {'name': 'Karan', 'Age': 24, 'Class' : 'Interview'}
-result = dict_filter(dict1, dict2)
-print(result)
 
 [Hard]
 Q50. Write a function that converts a flat dictionary with dot-notation
@@ -520,12 +266,6 @@ Q51. Print the following pattern using loops: DONE
      1 2 3
      1 2 3 4
      1 2 3 4 5
-
-for row in range(1,6):
-    for i in range(1,row+1):
-        print(i, end = ' ')
-    print()
-        
 
 [Medium]
 Q52. Write a loop-based function that finds the GCD (greatest common
