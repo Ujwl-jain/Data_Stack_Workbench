@@ -2,6 +2,18 @@
 #      function and a value, applies the function to the value twice,
 #      and returns the result. (Higher-order function)
 
+def apply_twice(func, value):
+    result = func(value)
+    return result
+
+# Using lambda
+print(apply_twice(lambda x:x*2, 4))
+
+# or create a function
+def double(x):
+    return x * 2
+
+print(apply_twice(double, 3))   # 12
 
 
 # ----------------------------------------------------------------------------------------------------------------
