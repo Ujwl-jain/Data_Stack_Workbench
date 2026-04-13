@@ -399,5 +399,13 @@ except:
 # Q52. Write a loop-based function that finds the GCD (greatest common
 #      divisor) of two numbers using the Euclidean algorithm.
 
+def GCD(a,b):
+    while b!= 0:
+        a,b = b, a%b
+    return a
+
+result = GCD(48,18)
+print(result)
+
 # Q53. Given a 2D list (matrix), use nested loops to compute the sum of
 #      each row and each column separately. Return as two lists.
