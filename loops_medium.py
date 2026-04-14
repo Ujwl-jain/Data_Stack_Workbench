@@ -409,3 +409,52 @@ print(result)
 
 # Q53. Given a 2D list (matrix), use nested loops to compute the sum of
 #      each row and each column separately. Return as two lists.
+
+'''
+Understanding
+2d list = [
+[2,4,5],
+[5,1,5],
+[5,6,7]
+]
+
+
+requriement -
+new list containing sum of each row - [sum of 2+4+5,sum of 5+1+5, sum of 5+6+7]
+new list containing sum if each column - [sum of 2+5+5, sum of 4+1+6, sum of 5+5+7]
+
+nested loop will be used to access the elements in list of list
+first loop will access the list in the list 
+
+create 2 empty list 
+row_sum =[]
+column_sum []
+
+next loop for element in list of list(): where addition will happen between the sum and appened in the particular empty list
+this is easyly done for rows
+
+let me think of columns
+'''
+
+list_2d = [
+[2,4,5],
+[5,1,5],
+[5,6,7]
+]
+row_sum = []
+column_sum = []
+for lst in list_2d:
+    row_total = 0
+    for row in lst:
+        row_total = row_total+row
+
+    row_sum.append(row_total)  
+
+for col in range(len(list_2d[0])):
+    col_total = 0
+    for row in range(len(list_2d)):
+        col_total = col_total + list_2d[row][col]
+    column_sum.append(col_total) 
+print(row_sum)
+print(column_sum)
+
