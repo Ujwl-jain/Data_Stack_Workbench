@@ -123,11 +123,6 @@ my understanding:
 flat the nexted list to a list
 [1, [2, [3, [4]]]] → [1, 2, 3, 4]
 
-logic:
-create a empty list
-if element is list directly append to fucti
-'''
-
 def flatten(nested_list):
     flat_list = []
     for element in nested_list:
@@ -141,6 +136,17 @@ def flatten(nested_list):
 nested_list = [1, ['string'], [2, [3, [4]]]]
 result = flatten(nested_list)
 print(f"the flatten list is {result}")
+
+# using pure recursion
+def flatten(lst):
+    if not lst:       
+        return []
+    first = lst[0]
+    rest = lst[1:]
+    if isinstance(first, list):
+        return flatten(first) + flatten(rest)
+    else:
+        return [first] + flatten(rest)
 
 # Q30. Write a recursive function to compute x raised to the power n
 #      (x^n). Implement it efficiently using the rule:
@@ -209,4 +215,24 @@ x = 3
 n = 6
 result = power(x,n)
 print(result)
+
+# More enhanced version
+def power(x, n):
+    if n == 0:
+        return 1
+    if n % 2 == 0:
+        # Even case: x^n = (x^(n/2))^2
+        half = power(x, n // 2)
+        return half * half
+    else:
+        # Odd case: x^n = x * x^(n-1)
+        return x * power(x, n - 1)
+
+
+# Test
+print(power(3, 6))   # 729
+print(power(2, 0))   # 1
+print(power(5, 1))   # 5
+print(power(2, 10))  # 1024
+print(power(7, 3))   # 343
 
