@@ -195,6 +195,80 @@ print(f'this result is produce using counter library {count_using_manully(str1)}
 # Q40. Write a function that converts a snake_case string to camelCase.
 #      Example: "hello_world_python" → "helloWorldPython"
 
+# Q40. Write a function that converts a snake_case string to camelCase.
+#      Example: "hello_world_python" → "helloWorldPython"
+
+'''
+My understanding
+
+camel case is something where word is attached as a single string but except for 1st word, every other word is in title case
+
+logic:
+create an empty string
+split the string with '_' to create a list
+process the list using for loop, if element is the first index of word whic is first word of string, then add as it is else, add the element as titlecase
+
+if its single word then there will be no camelcase camel case changes comes from second character
+'''
+
+def snake_to_camel(str1):
+    camel_case = ''
+    word = str1.split('_')
+    for element in word:
+        if element == word[0]:
+            camel_case = camel_case + element.lower()
+        else:
+            camel_case = camel_case + element.title()
+
+    return camel_case
+
+str1 = 'hello_world_python'
+
+print(f'the result is to convert the string from snakecase {str1} to camelcase: {snake_to_camel(str1)}')
+print('the following test cases:')
+print(snake_to_camel("hello_world_python"))
+print(snake_to_camel("user_name"))
+print(snake_to_camel("convert_snake_case_to_camel_case"))
+print(snake_to_camel("singleword"))
+print(snake_to_camel("a_b_c_d"))
+
+
+# enhanced version
+
+def snake_to_camel(snake_str):
+    if not snake_str:
+        return ""
+    
+    words = snake_str.split('_')
+    camel_case = ""
+    
+    for i, word in enumerate(words):
+        if i == 0:
+            # First word remains lowercase
+            camel_case += word.lower()
+        else:
+            # Other words: capitalize first letter
+            camel_case += word.title()
+    
+    return camel_case
+
+
+# ==================== Test Cases ====================
+test_cases = [
+    "hello_world_python",
+    "user_name",
+    "convert_snake_case_to_camel_case",
+    "singleword",
+    "a_b_c_d",
+    "a",                    # single character
+    "hello_world", 
+    ""
+]
+
+print("Snake Case → Camel Case Conversion:")
+for test in test_cases:
+    print(f"'{test}' → '{snake_to_camel(test)}'")
+
 # Q41. Write a function that takes a string and returns True if all
 #      brackets are balanced: (), [], {}.
 #      Example: "{[()]}" → True,  "{[(])}" → False
