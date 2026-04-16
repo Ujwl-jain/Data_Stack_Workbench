@@ -119,6 +119,79 @@ print(find_longest_words('one two three'))                     # ['three']
 
 # Q25 [Medium] Count frequency of each character in a string and return as a dictionary.
 
+'''
+my understanding
+
+count the frequency of a word and return as a dict, means
+
+string = i have store
+store = 5 character
+dict = {'store' : 5.....}
+
+approach:
+1st approach use collection counter directly
+2nd use loop and if else to count the word and frequency 
+
+Logic
+1st
+import counter from collection
+
+apply it on string
+
+print the result
+2nd
+
+create an empty dict, create a counter = 1
+for loop to process through the string char by char
+if char not in dict addit
+else increase its value
+
+i will also count digit as char as it is part of string, and string = charcter, '1' = string
+'''
+# using colletions
+from collections import Counter
+
+# test cases
+# str1 = 'I have 2 world class batsman in my team'
+# str1 = 'aabbcc'
+str1 = 'Batsmanb123'
+result = Counter(str1.strip())
+
+print(result)
+
+
+# using normal approch
+count = 1
+dict_char = {}
+for char in str1.strip():
+    if char not in dict_char:
+        dict_char[char] = count
+    else:
+        dict_char[char] += count
+
+print(dict_char)
+
+# using functions
+def count_using_counter(str1):
+    return Counter(str1())
+
+def count_using_manully(str1):
+    count = 1
+    dict_char = {}
+    for char in str1():
+        if char not in dict_char:
+            dict_char[char] = count
+        else:
+            dict_char[char] += count
+    
+    return dict_char
+
+
+str1 = 'AAbCddba'
+print(f'this result is produce using counter library {count_using_counter(str1)}')
+
+print(f'this result is produce using counter library {count_using_manully(str1)}')
+
 # Q40. Write a function that converts a snake_case string to camelCase.
 #      Example: "hello_world_python" → "helloWorldPython"
 
