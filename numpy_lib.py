@@ -116,3 +116,94 @@ what this will do it is take the size of that argumented array and create an emp
 '''
 emp_like = np.empty_like(lspave)
 print(emp_like)
+
+# identity
+'''
+this will give tne n*n identical matrix
+
+below gives the identitcal matrix of 45 x 45
+'''
+ide = np.identity(45)
+print(ide)
+print(ide.shape)
+print()
+
+# reshape()
+# this will give the array from 0 to 98
+arr = np.arange(99)
+# now we can write the same as this, this will devide the 1D array into equally arrays by n qhich is 3 here.
+arr = arr.reshape(3,33)
+print(arr)
+
+# this will give error as 3*31 will 93 and total elements are 99
+# arr1 = arr.reshape(3,31)
+# print(arr1)
+
+# ravel()
+'''
+this will convert the arrays, into 1D array
+'''
+arr = arr.ravel()
+print(arr.shape)
+print(arr)
+
+# --------------------------------------
+# AXIS
+'''
+1d Array - will have only 1 axis, axis 0, as there is only 1 single rows in it
+2d array - will have 2 axis, axis 0 for rows and axis 1 for columns
+
+on numpys some function can be perfomed based on axis
+
+1d array is kind of confusing as it contains only 1 rows and 1 axis, 
+generally 2D is more preferrable to work on, but for some knowlege go through the 3d,4d,5d arrays as well
+
+for example:
+1d array = [1,2,3,4,5]
+2d array =[[1,2,3],
+            [3,4,5],
+            [5,6,1]], contains 2 axis axis 0 for row and 1 for columns
+'''
+
+array_axis = [[1,2,3],[4,5,6],[7,1,8]]
+axis = np.array(array_axis)
+print(axis)
+
+# perform the axis function
+
+# here we are adding the arrays of a particular axis, 
+# here the axis 0, for every element in each row sum will return
+axis_sum = axis.sum(axis=0)
+print(axis_sum)
+print(axis.sum(axis=0))
+
+# here the axis 1, for every element in each columns sum will return
+axis_sum = axis.sum(axis=1)
+print(axis_sum)
+print(axis.sum(axis=1))
+
+# transpose
+'''
+this will transpone an array, where row becomes column and column becomes row
+'''
+print(axis.T)
+
+# flat
+'''
+this will flat the array and we can access each element using loop
+'''
+for i in axis.flat:
+    print(i)
+
+# ndim
+'''
+provides the dimension of array
+'''
+print(axis.ndim)
+print(axis.size)
+
+# nbytes
+'''
+which tells the total bytes consumed by array
+'''
+print(axis.nbytes)
