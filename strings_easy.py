@@ -74,3 +74,104 @@ print(f"the total words are {result_word}, the total char are {result_char} and 
 # Q57 [Easy]   Use strip, lstrip, rstrip, upper, lower, title, capitalize on the same string and print results.
 
 # Q58 [Easy]   Use split, join, replace, find, count, startswith, endswith on a paragraph string.
+
+# Q19. Write a function that takes a sentence and uses a lambda to
+#      capitalize the first letter of every word that has more than
+#      3 characters. Leave shorter words unchanged.
+'''
+my understanding:
+
+takes a sentense lets say - I am ujjwal Jain, i am student of data science and c++
+
+we will perfomr using normal function approach and lambda
+
+basically, capitalise the word of sentence which has a len of moer than 3 like ujjwal jain, data etc etc a
+and leave I, am etc unchanaged
+'''
+def sen_capitaliser(st):
+    st_list = st.split()
+    st_result = []
+    for word in st_list:
+        if len(word) > 3:
+            r = word.capitalize()
+            st_result.append(r)
+        else:
+            st_result.append(word)
+    
+    return ' '.join(st_result)
+
+str_input = 'I am ujjwal Jain, i am student of age 24 of data science and c++'
+print(f'The result after performing capitalisatio : {sen_capitaliser(str_input)}')
+
+# using lambda - map
+st_result = list(map(lambda x: x.capitalize() if len(x)>3 else x, str_input.split()))
+print(' '.join(st_result))
+
+
+# Q20. Import the `string` module. Write a function that removes all
+#      punctuation from a given string using string.punctuation.
+
+'''
+My understanding import a function from string lib, and use it to remove al punctuation from a string
+punctuation - anything that is not a number and digit, means special character
+
+punctuation lib - in built library to filter out special character from the string or it is a list of special character
+
+'''
+from string import punctuation as pun
+
+# using normal approcah
+def punctuation_cleaner(st):
+    final_str = ''
+    for char in st:
+        if char.isdigit() or char.isalpha() or char == ' ':
+           final_str = final_str + char
+
+    return final_str
+
+test = "Hello, World! How are you? I'm fine... Thanks #1!"
+print(f'The result after performing punctuation cleaning : {punctuation_cleaner(test)}')
+
+# using punctuation lib
+
+def punctuation_cleaner(st):
+    final_str = ''
+    for char in st:
+        if char not in pun:
+           final_str = final_str + char
+
+    return final_str
+
+test_pun = "Hello, World! How are you? I'm fine... Thanks #1!"
+print(f'The result after performing punctuation cleaning : {punctuation_cleaner(test_pun)}')
+
+
+# Q21. Write a function `mask_email(email)` that returns the email
+#      with all characters before '@' replaced by '*' except the
+#      first and last character.
+#      Example: "ujjwal@gmail.com" → "u*****l@gmail.co else x"
+
+'''
+My understanding:
+
+basically make the string * before @ except first and last letter before @\
+
+'''
+
+def mask_email(email):
+    mask_list = email.split('@')
+    username = mask_list[0]
+    domain = mask_list[1]
+    masked_email = ''
+    for char in range(len(username)):
+        if char == 0 or char == len(username) - 1:
+            masked_email = masked_email + username[char]
+        else:
+            masked_email = masked_email + '*'
+    
+    return (masked_email + '@' + domain)
+
+
+test_email = "jain24ujjwal24@gmail.com"
+print(f'The result after masking email : {mask_email(test_email)}')
+
