@@ -11,7 +11,7 @@ Mixed concepts: local/global vars, lambda,
  1. IF-ELSE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-[Easy]
+[Easy]- Done
 Q1.  Write a function that takes a username (string) and password
      (string). If username is "admin" and password is "1234", return
      "Access granted", else return "Access denied".
@@ -113,7 +113,7 @@ Q18. Write a number-to-words converter using loops and a dictionary
  3. STRINGS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-[Easy]
+[Easy] - Done
 Q19. Write a function that takes a sentence and uses a lambda to
      capitalize the first letter of every word that has more than
      3 characters. Leave shorter words unchanged.
