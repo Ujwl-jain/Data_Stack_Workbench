@@ -271,6 +271,53 @@ print(dict_del)             # {123: 89, 124: 69, 167: 78}
 # del dict_del              # removes the entire variable
 # print(dict_del)           # NameError: name 'dict_del' is not defined
 
+# ============================================================
+#                   DICTIONARY COMPREHENSION
+# ============================================================
+# A concise way to create a dictionary in one line.
+# Same idea as list comprehension but produces a dict.
+#
+# SYNTAX:
+#   {key_expr : value_expr for item in iterable}
+#   {key_expr : value_expr for item in iterable if condition}
+# ============================================================
+
+# regular way -- building a dict with a loop:
+squares = {}
+for i in range(1, 6):
+    squares[i] = i * i
+print(squares)      # {1: 1, 2: 4, 3: 9, 4: 16, 5: 25}
+
+# same thing with dict comprehension:
+squares = {i: i * i for i in range(1, 6)}
+print(squares)      # {1: 1, 2: 4, 3: 9, 4: 16, 5: 25}
+
+# with a condition -- only even numbers:
+even_squares = {i: i * i for i in range(1, 11) if i % 2 == 0}
+print(even_squares) # {2: 4, 4: 16, 6: 36, 8: 64, 10: 100}
+
+# swapping keys and values:
+original = {'name': 'ujjwal', 'city': 'pune', 'lang': 'python'}
+swapped  = {value: key for key, value in original.items()}
+print(swapped)      # {'ujjwal': 'name', 'pune': 'city', 'python': 'lang'}
+
+# from two lists using zip -- clean one liner:
+keys   = ['name', 'age', 'city']
+values = ['ujjwal', 21, 'pune']
+person = {k: v for k, v in zip(keys, values)}
+print(person)       # {'name': 'ujjwal', 'age': 21, 'city': 'pune'}
+
+# transforming values -- uppercasing all values:
+data    = {'name': 'ujjwal', 'city': 'pune', 'lang': 'python'}
+uppered = {k: v.upper() for k, v in data.items()}
+print(uppered)      # {'name': 'UJJWAL', 'city': 'PUNE', 'lang': 'PYTHON'}
+
+# filtering keys -- keep only items where value is above 50:
+marks = {'maths': 90, 'english': 45, 'science': 78, 'sst': 38}
+passed = {sub: mark for sub, mark in marks.items() if mark >= 50}
+print(passed)       # {'maths': 90, 'science': 78}
+
+
 
 # ============================================================
 #                    QUICK REFERENCE SUMMARY
