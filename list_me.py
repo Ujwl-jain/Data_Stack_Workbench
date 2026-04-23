@@ -421,6 +421,47 @@ print(list_clear)          # []  ← empty list, variable still exists
 # map(function, list)   # 1. takes a function and a list
 #                       # 2. applies function to every item
 # list(map(...))        # 3. always wrap with list() to get usable result
+
+# ============================================================
+#                        zip()
+# ============================================================
+# Combines two or more iterables element by element into tuples.
+# Returns a zip object -- convert to list to see the result.
+# Stops at the SHORTEST iterable if lengths are unequal.
+#
+# SYNTAX:
+#   zip(iterable1, iterable2, ...)
+# ============================================================
+
+names  = ['ujjwal', 'ram', 'shyam']
+scores = [95, 87, 76]
+grades = ['A', 'B', 'C']
+
+# basic zip -- pairs elements by position:
+zipped = list(zip(names, scores))
+print(zipped)       # [('ujjwal', 95), ('ram', 87), ('shyam', 76)]
+
+# zip three iterables:
+zipped3 = list(zip(names, scores, grades))
+print(zipped3)      # [('ujjwal', 95, 'A'), ('ram', 87, 'B'), ('shyam', 76, 'C')]
+
+# looping over zip directly -- most common use:
+for name, score in zip(names, scores):
+    print(f"{name} scored {score}")
+# ujjwal scored 95
+# ram    scored 87
+# shyam  scored 76
+
+# unequal lengths -- stops at shortest:
+a = [1, 2, 3, 4, 5]
+b = ['a', 'b', 'c']
+print(list(zip(a, b)))      # [(1, 'a'), (2, 'b'), (3, 'c')]  <- 4,5 are dropped
+
+# converting two lists into a dictionary using zip:
+keys   = ['name', 'age', 'city']
+values = ['ujjwal', 21, 'pune']
+person = dict(zip(keys, values))
+print(person)       # {'name': 'ujjwal', 'age': 21, 'city': 'pune'}
  
 # ============================================================
 #                    QUICK REFERENCE SUMMARY
