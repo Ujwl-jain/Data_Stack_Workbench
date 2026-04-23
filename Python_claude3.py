@@ -203,7 +203,7 @@ Q36. Write a function that finds the longest increasing subsequence
  5. TUPLES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-[Easy]
+[Easy] - DONE
 Q37. Write a function that takes a list of (name, age) tuples and uses
      a lambda with sorted() to return them sorted by age ascending.
 
