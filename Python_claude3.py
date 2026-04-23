@@ -339,7 +339,7 @@ Q63. Write a function that takes a list of log entries as dicts:
  8. SLICING
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-[Easy]
+[Easy] - DONE
 Q64. Write a function that takes a string and uses slicing to return
      the first half and second half separately as a tuple.
      For odd length, the middle character goes to the first half.
