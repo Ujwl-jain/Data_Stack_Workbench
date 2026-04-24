@@ -161,7 +161,7 @@ Q27. Write a Morse code encoder: given a sentence, convert it to
  4. LISTS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-[Easy]
+[Easy] - DONE
 Q28. Write a function that takes a list and uses a lambda with sorted()
      to sort it by absolute value.
      Example: [-5, 2, -1, 4] → [-1, 2, 4, -5]
