@@ -1,5 +1,5 @@
 '''
-Pandas
+Pandas - basic understanding
 '''
 
 import numpy as np
@@ -83,3 +83,36 @@ max    28.000000
 these functions describe will perform on numerical columns
 '''
 print(df.describe())
+
+# read_csv()
+'''
+this will read a particular csv, it is a built in pandas function
+'''
+uj = pd.read_csv('Sample_Testing.csv')
+print(uj)
+
+# accessing the rows and column of a df/or readed_csv
+'''
+to access the elements in the df, we can use rows and column
+
+for row use indexing to get access of the rows
+for columns use column name to get access of the particular column data
+'''
+
+# access based on column names
+print(uj['Age'])
+
+#access based on specific value using column name and indxing of rows
+# not a recommended method as this will show a warning but it will work
+print(uj['Age'][0])  #shows the value at 0th indexing which is first row at column ages
+
+# updating a value on a specific position, perform to.csv() with the same name and 
+# after updating and it will then also update in the same csv
+uj['Age'][0] = 99
+print(uj['Age'])
+
+# changing the indexing from 0 to n to anything 
+# but it is not efficient way to do it as this can possibly lead to - ValueError: Length mismatch: Expected axis has 5 elements, new values have 3 elements
+# for example, 
+uj.index = ['first','second','third','fourth','fifth']
+print(uj)
