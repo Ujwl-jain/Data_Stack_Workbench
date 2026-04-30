@@ -247,7 +247,7 @@ Q45. Using namedtuples, model an Employee with fields:
  6. SETS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-[Easy]
+[Easy] Done
 Q46. Write a function using sets that takes a string and returns True
      if all characters in it are unique (no repeats).
 
