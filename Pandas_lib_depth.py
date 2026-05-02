@@ -465,3 +465,6 @@ print(df.head)
 
 # newdf.dropna()
 # newdf.drop_duplicates()
+# new.df.value_count()
+# newdf.info()
+# newdf.notnull()
