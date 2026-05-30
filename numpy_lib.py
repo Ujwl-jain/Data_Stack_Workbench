@@ -97,7 +97,7 @@ for example as below, this will give 12 elements from 1 to 5, where the space be
 its dtype is float,
 '''
 lspace = np.linspace(1,5,12)
-lspave =np.linespace(1,4,4)
+lspave =np.linspace(1,4,4)
 print(lspace)
 print(lspave)
 
@@ -207,3 +207,114 @@ print(axis.size)
 which tells the total bytes consumed by array
 '''
 print(axis.nbytes)
+
+# ---------------------------------------------------------
+# functions to be perfomed in 1d array
+one  = np.array([10,2,3,4,5,6,71,8])
+
+# give the index number of the highest value in the array for the abov array it will show 6th index which is 71
+print(one.argmax())
+
+# give the index number of the lowes value in the array for the abov array it will show 1st index which value is 2
+print(one.argmin())
+
+# return an array of sorted indexing,x means this function sort on the basis of indexing and return the same positions as an array like: [1 2 3 4 5 7 0 6]
+# it is in ascending order, also tells that in which order should be our values be sorted.
+print(one.argsort())
+
+# same functions to be perfor on 2d array
+two = np.array([[1,2,3],
+                [4,5,6],
+                [7,1,8]])
+print(two)
+
+# arg max and arg min works in this way - > it will first flat the 2d array and give the indexing of numbe rwhich has highest or lowest value in above case it is at 8th and 0th index, which is 8 and 1
+print(two.argmin())
+
+print(two.argmax())
+
+# give the indexing of highest or lowest value from axis = 0  as 1d array 
+print(two.argmax(axis = 0))
+print(two.argmin(axis = 0))
+
+print(two.argmax(axis = 1))
+print(two.argmin(axis = 1))
+
+# works like argsort in 1d array, basically provide the 2d array of sorted array based on indexing of a value. 
+# but its output is limited to each row and column means like this: [[0 2 0]
+                                                                    # [1 0 1]
+                                                                    # [2 1 2]],  means it will not do flattening of 2d array, pleas explain how this work. 
+print(two.argsort(axis = 0))
+print(two.argsort(axis = 0))
+
+
+# -----------------------------------------------
+# Mathmatical oprration in numpy
+
+# add using 2 2d arrays - done using element + element like whatever element was at 0th indexing of 1st arrat will add with whatever idnexing is at 2nd array
+
+arr1 = np.array([[1,2,3],
+                [4,5,6],
+                [7,1,8]])
+
+arr2 =  np.array([[2,5,3],
+                [1,5,1],
+                [1,1,0]])
+
+print(arr1 + arr2)
+
+# subtract - done using element - element like whatever element was at 0th indexing of 1st arrat will minus with whatever idnexing is at 2nd array
+
+print(arr1 - arr2)
+
+# multiply - done using element * element like whatever element was at 0th indexing of 1st arrat will multiple with whatever idnexing is at 2nd array
+print(arr1 * arr2)
+
+# divide - done using element / element like whatever element was at 0th indexing of 1st arrat will divide with whatever idnexing is at 2nd array
+print(arr1 / arr2)
+
+# sqrt - squareroot the values of each element in the array
+print(np.sqrt(arr1))
+
+# sum() - sum of all ekements in the array
+print(arr1.sum())
+
+# max() - provide the largest value inside an array
+print(arr1.max())
+
+# min() - provide the lowes values inside an array
+print(arr1.min())
+
+# where - helps you to find a specific values like this tells us at which position we can find the values greater than 5 - (array([1, 2, 2]), array([2, 0, 2]))
+print(np.where(arr1 > 5))
+
+# count_nonzero - gives the count of non zero values inside an array
+print(np.count_nonzero(arr1))
+
+# nonzero() - returns a tuple of each dimension stating position of non zero values - (array([0, 0, 0, 1, 1, 1, 2, 2, 2]), array([0, 1, 2, 0, 1, 2, 0, 1, 2]))
+print(np.nonzero(arr1))
+
+
+# --------------------------------------------
+'''
+To prove: numpy takes less space, as for how:
+'''
+
+import sys
+
+# python array(list)
+py_ar = [1,2,3,4]
+
+# numpy_array
+np_ar = np.array(py_ar)
+
+# getsize of will tell the size of an element in bytes
+print(sys.getsizeof(1) * len(py_ar)) # shows 132 bytes
+print(np_ar.itemsize * np_ar.size)  #shows 32 bytes
+
+# hence proved, np array takes less size compare to normal array
+
+
+'''
+For more information on numpy practice attributes and methods mentioned in this website : https://docs.scipy.org/doc/numpy-1.6.0/reference/generated/numpy.ndarray.html
+'''
