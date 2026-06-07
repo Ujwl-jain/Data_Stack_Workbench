@@ -1,0 +1,227 @@
+=======================================================
+SQL NOTES: TRANSACTIONS AND AUTOCOMMIT
+=======================================================
+
+A transaction is a group of SQL statements that are treated as one unit.
+Either ALL of them succeed and are saved, or NONE of them are saved.
+This protects your data from being left in a broken in-between state.
+
+Real world example:
+    Bank transfer -- deduct 5000 from Account A, add 5000 to Account B.
+    If the deduction succeeds but the addition fails, the money disappears.
+    Wrapping both in a transaction ensures either both happen or neither does.
+
+=======================================================
+AUTOCOMMIT -- the default behaviour
+=======================================================
+
+By default, MySQL operates in AutoCommit mode.
+This means every single SQL statement is automatically treated as its
+own transaction and committed (saved permanently) the moment it runs.
+
+    AutoCommit ON (default):
+    UPDATE users SET salary = 80000 WHERE id = 6;
+    -- Saved permanently. No undo possible.
+
+    There is no going back once a statement runs in AutoCommit mode.
+    This is fine for simple, low-risk queries.
+    For complex multi-step updates, you want manual control.
+
+Check current AutoCommit status:
+    SELECT @@autocommit;
+    -- 1 means ON, 0 means OFF
+
+=======================================================
+TRANSACTION WORKFLOW
+=======================================================
+
+-------------------------------------------------------
+Step 1: Disable AutoCommit
+-------------------------------------------------------
+
+    SET autocommit = 0;
+
+    NOTE: Correct spelling is autocommit (not autocomit) -- common typo.
+
+    From this point onwards, nothing is saved to the database permanently
+    until you explicitly run COMMIT.
+    You are working in a temporary workspace -- changes are visible to
+    your session but not yet written to disk or visible to other users.
+
+-------------------------------------------------------
+Step 2a: ROLLBACK -- undo all changes since last COMMIT
+-------------------------------------------------------
+
+    ROLLBACK;
+
+    Reverts all changes made after the last COMMIT (or since AutoCommit was turned off).
+    Use this when you detect a mistake before committing.
+    Think of it as Ctrl+Z for your database operations.
+
+    After ROLLBACK, the data is exactly as it was before your changes.
+
+-------------------------------------------------------
+Step 2b: COMMIT -- save all changes permanently
+-------------------------------------------------------
+
+    COMMIT;
+
+    Writes all changes made since the last COMMIT to the database permanently.
+    Once committed, changes cannot be undone with ROLLBACK.
+    Changes become visible to all other users/sessions.
+
+    Think of COMMIT as hitting Save.
+
+-------------------------------------------------------
+Step 3: Re-enable AutoCommit
+-------------------------------------------------------
+
+    SET autocommit = 1;
+
+    Turns AutoCommit back on.
+    Every statement from this point is auto-saved again as before.
+
+=======================================================
+FULL WORKFLOW EXAMPLE
+=======================================================
+
+-------------------------------------------------------
+Scenario: You meant to update id = 5 but accidentally updated id = 6
+-------------------------------------------------------
+
+    -- Step 1: Turn off AutoCommit so nothing saves automatically
+    SET autocommit = 0;
+
+    -- Step 2: Run the update (wrong id by mistake)
+    UPDATE users SET salary = 80000 WHERE id = 6;
+
+    -- Step 3: Realise the mistake -- id should have been 5
+    ROLLBACK;
+    -- salary for id = 6 is back to what it was before. Mistake undone.
+
+    -- Step 4: Run the correct update
+    UPDATE users SET salary = 80000 WHERE id = 5;
+
+    -- Step 5: Verify the result looks correct, then save permanently
+    SELECT id, name, salary FROM users WHERE id IN (5, 6);
+
+    -- Step 6: Commit to make it permanent
+    COMMIT;
+
+    -- Step 7: Re-enable AutoCommit
+    SET autocommit = 1;
+
+=======================================================
+SAVEPOINTS -- partial rollback within a transaction
+=======================================================
+
+A SAVEPOINT lets you mark a checkpoint inside a transaction.
+You can ROLLBACK to that checkpoint without undoing everything.
+Useful when a transaction has multiple steps and only part of it fails.
+
+    SET autocommit = 0;
+
+    UPDATE users SET salary = 50000 WHERE id = 1;
+
+    SAVEPOINT after_first_update;
+    -- Checkpoint saved here
+
+    UPDATE users SET salary = 70000 WHERE id = 2;
+
+    -- Something wrong with the second update only
+    ROLLBACK TO SAVEPOINT after_first_update;
+    -- id = 2 is back to original. id = 1 change is still active.
+
+    COMMIT;
+    -- Only the id = 1 update is saved permanently.
+
+    -- Clean up the savepoint (optional):
+    RELEASE SAVEPOINT after_first_update;
+
+Savepoint commands:
+    SAVEPOINT name              -- create a checkpoint
+    ROLLBACK TO SAVEPOINT name  -- undo back to that checkpoint only
+    RELEASE SAVEPOINT name      -- remove the savepoint (does not commit or rollback)
+
+=======================================================
+START TRANSACTION -- alternative to SET autocommit = 0
+=======================================================
+
+Instead of disabling AutoCommit, you can use START TRANSACTION.
+It begins a manual transaction block without permanently changing AutoCommit mode.
+AutoCommit is still ON globally -- it is just paused for this block.
+
+    START TRANSACTION;
+
+    UPDATE users SET salary = 80000 WHERE id = 5;
+    DELETE FROM users WHERE id = 10;
+
+    -- All good:
+    COMMIT;
+
+    -- Or something went wrong:
+    ROLLBACK;
+
+    SET autocommit = 0  vs  START TRANSACTION:
+        SET autocommit = 0  -- turns off AutoCommit globally until you turn it back on
+        START TRANSACTION   -- starts one transaction block, AutoCommit resumes after COMMIT/ROLLBACK
+        In practice, START TRANSACTION is preferred -- cleaner and less risk of forgetting
+        to re-enable AutoCommit.
+
+=======================================================
+WHAT CAN AND CANNOT BE ROLLED BACK
+=======================================================
+
+    Can be rolled back (DML):      INSERT, UPDATE, DELETE
+    Cannot be rolled back (DDL):   CREATE, ALTER, DROP, TRUNCATE
+
+    DDL statements cause an implicit COMMIT.
+    If you run DROP TABLE inside a transaction, it commits immediately
+    and cannot be undone with ROLLBACK.
+
+    Example of the trap:
+        START TRANSACTION;
+        UPDATE users SET salary = 99999 WHERE id = 1;
+        DROP TABLE temp_data;       -- implicit COMMIT fires here
+        ROLLBACK;                   -- too late, both changes are already committed
+
+=======================================================
+BEST PRACTICES
+=======================================================
+
+    1. Use START TRANSACTION instead of SET autocommit = 0
+       for one-off transaction blocks -- safer and cleaner.
+
+    2. Always pair every transaction with either COMMIT or ROLLBACK.
+       Leaving a transaction open locks rows and blocks other users.
+
+    3. Use SAVEPOINT for long multi-step transactions so you can
+       partially undo without losing all your work.
+
+    4. Run a SELECT to verify your changes BEFORE running COMMIT.
+       Once committed, there is no undo.
+
+    5. Never run UPDATE or DELETE without WHERE in a transaction
+       (or at all). If you make a mistake on every row, ROLLBACK
+       saves you -- but only if you haven't committed yet.
+
+    6. DDL statements (DROP, ALTER, TRUNCATE) auto-commit.
+       Do not mix them into a transaction expecting ROLLBACK to work.
+
+=======================================================
+QUICK REFERENCE
+=======================================================
+
+Command                        | What it does
+------------------------------------------------------------------------------
+SET autocommit = 0             | Disable AutoCommit globally
+SET autocommit = 1             | Re-enable AutoCommit globally
+SELECT @@autocommit            | Check current AutoCommit status (1=ON, 0=OFF)
+START TRANSACTION              | Begin a transaction block (preferred approach)
+COMMIT                         | Save all changes permanently
+ROLLBACK                       | Undo all changes back to last COMMIT
+SAVEPOINT name                 | Create a checkpoint inside a transaction
+ROLLBACK TO SAVEPOINT name     | Undo back to that checkpoint only
+RELEASE SAVEPOINT name         | Remove the savepoint
+
+=======================================================
