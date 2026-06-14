@@ -1,0 +1,358 @@
+=======================================================
+SQL NOTES: KEYS
+=======================================================
+
+Keys are constraints that define relationships between rows and tables.
+They enforce data integrity -- making sure the data stays accurate,
+consistent, and logically connected across the database.
+
+Keys covered:
+    Primary Key   -- uniquely identifies each row in a table
+    Unique Key    -- ensures no duplicates in a column (but not a row identifier)
+    Foreign Key   -- links a column in one table to the primary key of another
+
+=======================================================
+PRIMARY KEY
+=======================================================
+
+Rules:
+    1. Must be unique -- no two rows can have the same primary key value
+    2. Cannot be NULL -- every row must have a value
+    3. Used to identify rows -- it is the definitive way to point to one exact row
+    4. Can be a single column or a combination of columns (composite key)
+    5. Each table can have only one primary key
+
+-------------------------------------------------------
+Basic usage
+-------------------------------------------------------
+
+    CREATE TABLE users (
+        id   INT          AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100)
+    );
+
+    NOTE: Correct spelling is AUTO_INCREMENT (not AUTO_INCREAMENT) -- common typo.
+          This appears in actual queries so the spelling matters.
+
+-------------------------------------------------------
+AUTO_INCREMENT -- how it works
+-------------------------------------------------------
+
+    id INT AUTO_INCREMENT PRIMARY KEY
+
+    MySQL automatically assigns the next available integer when a new row
+    is inserted. You never provide this value manually.
+
+    Behaviour:
+        INSERT INTO users (name) VALUES ('Alice');   -- id = 1
+        INSERT INTO users (name) VALUES ('Bob');     -- id = 2
+        INSERT INTO users (name) VALUES ('Charlie'); -- id = 3
+
+    If you delete id = 3 and insert again, MySQL does NOT reuse 3.
+    It continues from 4. AUTO_INCREMENT never goes backwards.
+
+    Changing the AUTO_INCREMENT starting value:
+        ALTER TABLE users AUTO_INCREMENT = 1000;
+        -- Next inserted row will get id = 1000, then 1001, 1002 ...
+
+    When to change it:
+        - You want IDs to start from a number other than 1
+        - You are merging data from another table and need IDs to not collide
+        - You want to leave gaps for different data categories
+
+-------------------------------------------------------
+Adding and dropping a Primary Key
+-------------------------------------------------------
+
+    -- Add a primary key to an existing table:
+    ALTER TABLE users ADD CONSTRAINT PRIMARY KEY (id);
+
+    -- Drop a primary key:
+    ALTER TABLE users DROP PRIMARY KEY;
+
+    Dropping a primary key is more restricted than dropping a UNIQUE constraint.
+    It may fail if:
+        - The column has AUTO_INCREMENT (remove AUTO_INCREMENT first)
+        - Another table has a FOREIGN KEY referencing this primary key
+          (drop the foreign key in the child table first)
+
+    Correct order to drop when foreign keys exist:
+        1. DROP FOREIGN KEY in the child table
+        2. DROP PRIMARY KEY in the parent table
+
+=======================================================
+PRIMARY KEY vs UNIQUE -- the difference
+=======================================================
+
+They look similar but serve different purposes:
+
+Property              | PRIMARY KEY              | UNIQUE
+------------------------------------------------------------------
+Uniqueness            | Yes, must be unique      | Yes, must be unique
+NULL allowed          | No, never                | Yes, one NULL allowed
+How many per table    | Only one                 | Multiple allowed
+Purpose               | Row identifier           | Prevent duplicates in a column
+Required              | Yes, every table needs 1 | Optional
+Can be dropped        | Restricted (see above)   | Can be dropped anytime
+Creates an index      | Yes (clustered)          | Yes (non-clustered)
+
+    CREATE TABLE users (
+        id    INT          AUTO_INCREMENT PRIMARY KEY,
+        email VARCHAR(100) UNIQUE,
+        name  VARCHAR(100)
+    );
+
+    id    -- unique identifier for the row, cannot be NULL, auto-assigned
+    email -- must be unique across all users, but it is not the row identifier
+            (two users cannot share an email, but email is not how the DB
+            internally points to a row -- id is)
+
+Analogy:
+    PRIMARY KEY is like your national ID number -- one per person, never null,
+    used by every other system to reference you.
+    UNIQUE is like your email address -- must be unique but is not the
+    official government-level identifier.
+
+=======================================================
+COMPOSITE PRIMARY KEY
+=======================================================
+
+A primary key made of two or more columns combined.
+The combination must be unique -- individual columns can repeat.
+
+    CREATE TABLE enrollments (
+        student_id INT,
+        course_id  INT,
+        enrolled_at DATE,
+        PRIMARY KEY (student_id, course_id)
+    );
+
+    A student can appear multiple times (different courses).
+    A course can appear multiple times (different students).
+    But the same student cannot enroll in the same course twice.
+
+    Use composite keys in junction/mapping tables that represent
+    many-to-many relationships.
+
+=======================================================
+FOREIGN KEY
+=======================================================
+
+A foreign key is a column in one table that references the primary key
+of another table.
+It creates a link between two tables and enforces referential integrity --
+meaning you cannot have data in a child table that has no matching parent.
+
+-------------------------------------------------------
+Terminology
+-------------------------------------------------------
+
+    Parent table (referenced table) -- the table being pointed to
+                                       e.g., users (has the primary key)
+
+    Child table (referencing table) -- the table that holds the foreign key
+                                       e.g., addresses (has user_id pointing to users.id)
+
+-------------------------------------------------------
+Example
+-------------------------------------------------------
+
+    -- Parent table:
+    CREATE TABLE users (
+        id    INT          AUTO_INCREMENT PRIMARY KEY,
+        email VARCHAR(100) UNIQUE,
+        name  VARCHAR(100)
+    );
+
+    -- Child table:
+    CREATE TABLE addresses (
+        id      INT          AUTO_INCREMENT PRIMARY KEY,
+        user_id INT,
+        street  VARCHAR(100),
+        city    VARCHAR(100),
+        state   VARCHAR(100),
+        CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE
+    );
+
+    NOTE: Correct spelling is FOREIGN KEY ... REFERENCES (not FORIEGN, not REFERENCE)
+          Both are common typos. The query will fail if misspelled.
+
+    user_id in addresses must match an existing id in users.
+    You cannot insert an address for a user_id that does not exist in users.
+
+-------------------------------------------------------
+What happens without a foreign key
+-------------------------------------------------------
+
+    Without fk_user constraint:
+        DELETE FROM users WHERE id = 5;
+        -- User 5 is gone from users table.
+        -- But addresses still has rows with user_id = 5.
+        -- Those rows now point to a user that does not exist.
+        -- This is called an orphan record -- broken, meaningless data.
+
+    With fk_user constraint:
+        MySQL will not allow this situation to exist.
+        What happens depends on the ON DELETE behaviour you choose.
+
+=======================================================
+ON DELETE BEHAVIOUR -- what happens when parent row is deleted
+=======================================================
+
+-------------------------------------------------------
+1. ON DELETE CASCADE
+-------------------------------------------------------
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+
+    When a parent row is deleted, all matching child rows are automatically
+    deleted too.
+
+    Example:
+        DELETE FROM users WHERE id = 5;
+        -- Row with id = 5 removed from users.
+        -- All rows in addresses where user_id = 5 are automatically deleted.
+
+    Use when: child rows have no meaning without the parent.
+              e.g., a user's addresses, orders, comments -- if the user is gone,
+              their data should go too.
+
+-------------------------------------------------------
+2. ON DELETE SET NULL
+-------------------------------------------------------
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+
+    When a parent row is deleted, the foreign key column in child rows
+    is set to NULL instead of deleting the child row.
+
+    The child row is kept but the link to the parent is broken.
+
+    Example:
+        DELETE FROM users WHERE id = 5;
+        -- Row with id = 5 removed from users.
+        -- All rows in addresses where user_id = 5 now have user_id = NULL.
+
+    Requirement: the foreign key column (user_id) must allow NULL.
+                 If it is defined as NOT NULL, this will fail.
+
+    Use when: the child record still has value even without a parent.
+              e.g., an audit log entry -- you want to keep the log even if
+              the user who triggered it was deleted.
+
+-------------------------------------------------------
+3. ON DELETE RESTRICT
+-------------------------------------------------------
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
+
+    MySQL BLOCKS the deletion of the parent row if any child rows
+    referencing it still exist.
+    You must manually delete or reassign child rows first.
+
+    Example:
+        DELETE FROM users WHERE id = 5;
+        -- ERROR: Cannot delete or update a parent row:
+        --        a foreign key constraint fails.
+
+    This is also the DEFAULT behaviour if you do not specify ON DELETE at all.
+
+    Use when: you want to prevent accidental deletion of data that is
+              still actively referenced.
+              e.g., a product category -- don't allow deleting a category
+              while products still belong to it.
+
+-------------------------------------------------------
+4. ON DELETE SET DEFAULT
+-------------------------------------------------------
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET DEFAULT
+
+    Sets the foreign key column to its DEFAULT value when the parent is deleted.
+    NOTE: MySQL / InnoDB does not fully support this -- use with caution.
+          It is supported in some other databases like PostgreSQL.
+          In MySQL, use SET NULL or CASCADE instead.
+
+-------------------------------------------------------
+ON DELETE comparison
+-------------------------------------------------------
+
+    Behaviour      | What happens to child rows        | Use when
+    -------------------------------------------------------------------------------
+    CASCADE        | Child rows deleted automatically  | Child has no meaning without parent
+    SET NULL       | Foreign key set to NULL           | Child is kept, link is optional
+    RESTRICT       | Parent deletion blocked           | Want to force manual cleanup (default)
+    SET DEFAULT    | Foreign key set to default value  | Rare, limited MySQL support
+
+-------------------------------------------------------
+Adding and dropping a Foreign Key
+-------------------------------------------------------
+
+    -- Add a foreign key to an existing table:
+    ALTER TABLE addresses
+    ADD CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE;
+
+    -- Drop a foreign key:
+    ALTER TABLE addresses DROP FOREIGN KEY fk_user;
+
+    Always name your foreign key constraints (fk_user, fk_order etc.)
+    so you can reference them easily when dropping or debugging.
+
+    Must drop foreign key BEFORE dropping the parent table.
+    Otherwise MySQL will block the DROP TABLE with a constraint error.
+
+-------------------------------------------------------
+Full working example
+-------------------------------------------------------
+
+    CREATE TABLE users (
+        id    INT          AUTO_INCREMENT PRIMARY KEY,
+        name  VARCHAR(100) NOT NULL,
+        email VARCHAR(100) UNIQUE NOT NULL
+    );
+
+    CREATE TABLE orders (
+        order_id   INT          AUTO_INCREMENT PRIMARY KEY,
+        user_id    INT          NOT NULL,
+        amount     DECIMAL(10,2),
+        created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE RESTRICT
+    );
+
+    -- This works (user id 1 exists):
+    INSERT INTO users (name, email) VALUES ('Alice', 'alice@gmail.com');
+    INSERT INTO orders (user_id, amount) VALUES (1, 599.99);
+
+    -- This fails (user id 99 does not exist):
+    INSERT INTO orders (user_id, amount) VALUES (99, 199.99);
+    -- ERROR: Cannot add or update a child row: a foreign key constraint fails
+
+    -- This also fails (ON DELETE RESTRICT, order still references Alice):
+    DELETE FROM users WHERE id = 1;
+    -- ERROR: Cannot delete or update a parent row: a foreign key constraint fails
+
+=======================================================
+KEYS -- QUICK REFERENCE
+=======================================================
+
+Key Type     | Column rule          | NULL allowed | Per table | Main purpose
+------------------------------------------------------------------------------------
+PRIMARY KEY  | Unique, not null     | No           | Only one  | Row identifier
+UNIQUE       | Unique               | One NULL OK  | Multiple  | Prevent duplicates
+FOREIGN KEY  | Must match parent PK | Depends      | Multiple  | Link two tables
+
+ON DELETE    | Child row behaviour
+----------------------------------------------
+CASCADE      | Deleted automatically
+SET NULL     | Foreign key becomes NULL
+RESTRICT     | Parent deletion blocked (default)
+
+Common typos to watch:
+    AUTO_INCREAMENT  ->  AUTO_INCREMENT
+    FORIEGN KEY      ->  FOREIGN KEY
+    REFERENCE        ->  REFERENCES
+
+=======================================================

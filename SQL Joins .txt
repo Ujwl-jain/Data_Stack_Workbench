@@ -1,0 +1,36 @@
+SQL Joins
+------------------------
+
+1. inner join:
+
+Returns only the matching rows from both tables
+
+SELETC users.name, addresses.city
+FROM users
+INNER JOIN addresses ON users.id = addresses.user_id
+
+
+SELETC users.name, users.gender, addresses.city, addresses.state
+FROM users
+INNER JOIN addresses ON users.id = addresses.user_id
+
+2. Left JOIN
+
+return all rows from the left table, but right is optional, if the data is not present then it will Show NULL over there  
+
+left table = the table which is written first in the query, in our case it is users
+
+SELETC users.name, users.gender, addresses.city, addresses.state
+FROM users
+LEFT JOIN addresses ON users.id = addresses.user_id
+
+3. Right JOIN
+
+
+return all rows from the right table, but left is optional, if the data is not present then it will Show NULL over there  
+
+right table = the table which is written second in the query, in our case it is addresses
+
+SELETC users.name, users.gender, addresses.city, addresses.state
+FROM users
+Right JOIN addresses ON users.id = addresses.user_id
