@@ -34,3 +34,56 @@ right table = the table which is written second in the query, in our case it is 
 SELETC users.name, users.gender, addresses.city, addresses.state
 FROM users
 Right JOIN addresses ON users.id = addresses.user_id
+
+
+------
+Union
+
+this operator helps combine the result sets of two or more select statements, it removes duplicate by default
+
+If you want to include all rows including duplicates then use Union ALL - try this in practices
+
+Example scenario:
+we already have a users table for active users. Now, we’ll create an
+admin_users table to store users who are administrators or have special roles. We
+will then combine the names from both tables using UNION
+
+SELECT name FROM users
+UNION
+SELECT name from admin_users
+
+or 
+
+SELECT name, email FROM users
+UNION
+SELECT name, email from admin_users
+
+
+-> Below query will create a new column for the result which shows the role of that user
+SELECT name, 'User' AS role FROM users
+UNION
+SELECT name, 'Admin' AS role FROM admin_users;
+
+-> Order by with Union
+SELECT name,date_of_birth FROM users
+UNION
+SELECT name,date_of_birth FROM admin_users
+ORDER BY date_of_birth
+
+Rules for using union:
+1. number of columns and their data types must match in all select statement
+2. Union removes duplciate by default
+3. Union all keeps duplicate
+
+when to use:
+1, when having 2 similar tables
+2. you need to combine filtered results
+3. when performing cross category reporting
+
+
+----------
+Self join
+
+ 
+
+
