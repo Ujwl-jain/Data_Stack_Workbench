@@ -1,0 +1,294 @@
+=======================================================
+SQL NOTES: VIEWS
+=======================================================
+
+A VIEW is a virtual table based on the result of a SELECT query.
+It does not store data itself -- it is a saved query with a name.
+Every time you query a view, MySQL runs the underlying SELECT query
+against the actual (base) tables and returns the latest data.
+
+Think of it like a saved filter or a named window into your table.
+The view always reflects the current state of the base table automatically.
+
+=======================================================
+WHY USE VIEWS
+=======================================================
+
+    1. Simplify complex queries
+       Save a long JOIN + WHERE + GROUP BY query as a view.
+       Next time you just write: SELECT * FROM view_name;
+
+    2. Reuse logic
+       Write the filtering logic once, use it from anywhere.
+       No need to copy-paste the same WHERE conditions across queries.
+
+    3. Hide sensitive columns from users
+       Create a view that excludes salary, password, or personal data.
+       Give users access to the view but not the base table.
+
+    4. Live snapshot of filtered data
+       View always shows current data. No manual refresh needed.
+       e.g., always shows only users with salary > 70000 as of right now.
+
+    5. Cleaner code in applications
+       Application queries become simple: SELECT * FROM active_users
+       instead of a 10-line query every time.
+
+=======================================================
+CREATING A VIEW
+=======================================================
+
+    Syntax:
+    CREATE VIEW view_name AS
+    SELECT ...;
+
+-------------------------------------------------------
+Basic example
+-------------------------------------------------------
+
+    CREATE VIEW rich_users AS
+    SELECT * FROM users WHERE salary > 70000;
+
+    This creates a view called rich_users.
+    The query SELECT * FROM users WHERE salary > 70000 is stored as the definition.
+    No data is copied or stored anywhere.
+
+    Query the view exactly like a table:
+    SELECT * FROM rich_users;
+
+    Result is identical to running:
+    SELECT * FROM users WHERE salary > 70000;
+
+-------------------------------------------------------
+Views reflect live data automatically
+-------------------------------------------------------
+
+    -- Update the base table:
+    UPDATE users SET salary = 40000 WHERE id = 2;
+
+    -- Query the view again:
+    SELECT * FROM rich_users;
+
+    User with id = 2 no longer appears in the result.
+    Their salary dropped below 70000, so the view filter excludes them now.
+    You did not touch the view at all -- it updated itself automatically.
+
+    This is what "virtual table" means:
+        The view has no data of its own.
+        It always re-runs its SELECT against the base table when queried.
+
+=======================================================
+PRACTICAL VIEW EXAMPLES
+=======================================================
+
+-------------------------------------------------------
+1. View to simplify a complex JOIN query
+-------------------------------------------------------
+
+    Without a view, every developer has to write this every time:
+    SELECT u.name, u.email, a.city, a.state
+    FROM users u
+    INNER JOIN addresses a ON u.id = a.user_id
+    WHERE u.is_active = TRUE;
+
+    Create a view once:
+    CREATE VIEW active_users_with_address AS
+    SELECT u.name, u.email, a.city, a.state
+    FROM users u
+    INNER JOIN addresses a ON u.id = a.user_id
+    WHERE u.is_active = TRUE;
+
+    Now everyone just writes:
+    SELECT * FROM active_users_with_address;
+
+-------------------------------------------------------
+2. View to hide sensitive columns
+-------------------------------------------------------
+
+    The users table has: id, name, email, salary, password_hash
+
+    Create a view that exposes only safe columns:
+    CREATE VIEW public_user_info AS
+    SELECT id, name, email FROM users;
+
+    Grant access to the view, not the base table.
+    Users querying public_user_info never see salary or password_hash.
+
+-------------------------------------------------------
+3. View for live filtered reporting
+-------------------------------------------------------
+
+    CREATE VIEW underpaid_employees AS
+    SELECT name, email, salary FROM users WHERE salary < 30000;
+
+    CREATE VIEW senior_employees AS
+    SELECT name, email, salary FROM users WHERE salary > 80000;
+
+    These are always up to date.
+    No scheduled job or manual refresh needed.
+
+-------------------------------------------------------
+4. View using aggregate functions
+-------------------------------------------------------
+
+    CREATE VIEW gender_salary_summary AS
+    SELECT gender,
+           COUNT(*) AS total_users,
+           ROUND(AVG(salary), 2) AS avg_salary,
+           MIN(salary) AS min_salary,
+           MAX(salary) AS max_salary
+    FROM users
+    GROUP BY gender;
+
+    SELECT * FROM gender_salary_summary;
+
+    Result:
+        gender  | total_users | avg_salary | min_salary | max_salary
+        Male    | 120         | 55000.00   | 22000      | 95000
+        Female  | 95          | 58000.00   | 25000      | 98000
+
+=======================================================
+MODIFYING A VIEW
+=======================================================
+
+-------------------------------------------------------
+Replace / update an existing view
+-------------------------------------------------------
+
+    CREATE OR REPLACE VIEW rich_users AS
+    SELECT id, name, salary FROM users WHERE salary > 90000;
+
+    CREATE OR REPLACE -- updates the view definition if it already exists,
+                         creates it if it does not.
+    Safer than DROP + CREATE because it does not break anything referencing
+    the view in between.
+
+-------------------------------------------------------
+Rename a view
+-------------------------------------------------------
+
+    RENAME TABLE rich_users TO wealthy_users;
+
+    MySQL uses RENAME TABLE for views as well as tables.
+
+=======================================================
+DROPPING A VIEW
+=======================================================
+
+    DROP VIEW rich_users;
+
+    Deletes the view definition only.
+    The base table (users) and its data are completely untouched.
+
+    Safe version (no error if view does not exist):
+    DROP VIEW IF EXISTS rich_users;
+
+    DROP VIEW vs DROP TABLE:
+        DROP VIEW  -- removes the saved query, base data is safe
+        DROP TABLE -- removes the table and all its data permanently
+
+=======================================================
+CAN YOU MODIFY DATA THROUGH A VIEW?
+=======================================================
+
+Short answer: sometimes yes, but with strict conditions and risks.
+In practice: treat views as read-only. Never modify data through them.
+
+-------------------------------------------------------
+When MySQL technically allows it
+-------------------------------------------------------
+
+    A view is considered updatable if:
+        - It is based on a single table (no JOINs)
+        - It does not use DISTINCT
+        - It does not use GROUP BY, HAVING, or aggregate functions
+        - It does not use subqueries in SELECT
+        - It does not use UNION
+
+    Example of an updatable view (technically):
+    CREATE VIEW simple_users AS
+    SELECT id, name, salary FROM users;
+
+    UPDATE simple_users SET salary = 60000 WHERE id = 3;
+    -- MySQL allows this and updates the base table users directly.
+
+-------------------------------------------------------
+The WITH CHECK OPTION problem (why views are risky for updates)
+-------------------------------------------------------
+
+    CREATE VIEW rich_users AS
+    SELECT * FROM users WHERE salary > 70000;
+
+    UPDATE rich_users SET salary = 40000 WHERE id = 1;
+    -- MySQL allows this by default.
+    -- id = 1 now has salary = 40000.
+    -- That row immediately DISAPPEARS from rich_users (no longer > 70000).
+    -- You just modified data through a view and the row vanished from view.
+    -- This is confusing and error-prone.
+
+    Fix: add WITH CHECK OPTION
+    CREATE VIEW rich_users AS
+    SELECT * FROM users WHERE salary > 70000
+    WITH CHECK OPTION;
+
+    Now:
+    UPDATE rich_users SET salary = 40000 WHERE id = 1;
+    -- ERROR: CHECK OPTION failed. MySQL blocks updates that would cause
+    --        the row to fall outside the view's WHERE condition.
+
+-------------------------------------------------------
+When MySQL blocks updates through a view
+-------------------------------------------------------
+
+    Views based on JOINs:
+    CREATE VIEW user_city AS
+    SELECT u.name, a.city FROM users u JOIN addresses a ON u.id = a.user_id;
+
+    UPDATE user_city SET city = 'Pune' WHERE name = 'Alice';
+    -- ERROR: The target table is not updatable.
+
+    Views with aggregates:
+    CREATE VIEW salary_summary AS
+    SELECT gender, AVG(salary) AS avg_salary FROM users GROUP BY gender;
+
+    UPDATE salary_summary SET avg_salary = 60000 WHERE gender = 'Male';
+    -- ERROR: The target table is not updatable.
+
+-------------------------------------------------------
+Rule of thumb
+-------------------------------------------------------
+
+    Use views for SELECT only.
+    For INSERT, UPDATE, DELETE -- always go to the base table directly.
+    This keeps your logic predictable and your data safe.
+
+=======================================================
+VIEWS vs TABLES -- KEY DIFFERENCES
+=======================================================
+
+Property             | TABLE                          | VIEW
+---------------------------------------------------------------------
+Stores data          | Yes, physically on disk        | No, virtual only
+Data freshness       | Static until changed           | Always reflects base table
+Created with         | CREATE TABLE                   | CREATE VIEW
+Can JOIN on          | Yes                            | Yes
+Can be queried       | Yes                            | Yes
+Can INSERT/UPDATE    | Yes                            | Sometimes, but avoid it
+Dropped with         | DROP TABLE (data lost)         | DROP VIEW (data safe)
+Performance          | Direct access                  | Re-runs SELECT each time
+
+=======================================================
+QUICK REFERENCE
+=======================================================
+
+Task                              | Query
+------------------------------------------------------------------------------
+Create a view                     | CREATE VIEW name AS SELECT ...;
+Query a view                      | SELECT * FROM view_name;
+Update view definition            | CREATE OR REPLACE VIEW name AS SELECT ...;
+Drop a view                       | DROP VIEW view_name;
+Drop safely                       | DROP VIEW IF EXISTS view_name;
+Prevent unsafe updates via view   | ... WITH CHECK OPTION;
+List all views in database        | SHOW FULL TABLES WHERE Table_type = 'VIEW';
+
+=======================================================
