@@ -1,89 +1,338 @@
-SQL Joins
-------------------------
+=======================================================
+SQL NOTES: JOINS
+=======================================================
 
-1. inner join:
+A JOIN combines rows from two or more tables based on a related column.
+Without joins, you would need multiple separate queries and manually
+match the data yourself -- joins let the database do that work.
 
-Returns only the matching rows from both tables
+Reference tables used throughout these notes:
 
-SELETC users.name, addresses.city
-FROM users
-INNER JOIN addresses ON users.id = addresses.user_id
+    users table:
+        id | name    | gender | email
+        1  | Alice   | Female | alice@gmail.com
+        2  | Bob     | Male   | bob@gmail.com
+        3  | Charlie | Male   | charlie@gmail.com
+        4  | Diana   | Female | diana@gmail.com   <- no address
 
+    addresses table:
+        id | user_id | city      | state
+        1  | 1       | Mumbai    | Maharashtra
+        2  | 2       | Pune      | Maharashtra
+        3  | 3       | Delhi     | Delhi
+        4  | 99      | Chennai   | Tamil Nadu     <- no matching user
 
-SELETC users.name, users.gender, addresses.city, addresses.state
-FROM users
-INNER JOIN addresses ON users.id = addresses.user_id
+=======================================================
+1. INNER JOIN
+=======================================================
 
-2. Left JOIN
+Returns ONLY rows where a match exists in BOTH tables.
+Rows that have no match on either side are excluded from the result.
 
-return all rows from the left table, but right is optional, if the data is not present then it will Show NULL over there  
+    SELECT users.name, addresses.city
+    FROM users
+    INNER JOIN addresses ON users.id = addresses.user_id;
 
-left table = the table which is written first in the query, in our case it is users
+    NOTE: Correct spelling is SELECT (not SELETC) -- appears in all your queries.
 
-SELETC users.name, users.gender, addresses.city, addresses.state
-FROM users
-LEFT JOIN addresses ON users.id = addresses.user_id
+    What ON does:
+        ON users.id = addresses.user_id
+        This is the join condition -- it tells MySQL how to match rows.
+        For each row in users, find rows in addresses where user_id equals id.
 
-3. Right JOIN
+    Result using the reference tables above:
+        name    | city
+        Alice   | Mumbai
+        Bob     | Pune
+        Charlie | Delhi
 
+        Diana is excluded   -- she has no address (user_id 4 not in addresses)
+        Chennai is excluded -- user_id 99 does not exist in users
 
-return all rows from the right table, but left is optional, if the data is not present then it will Show NULL over there  
+    Multiple columns:
+    SELECT users.name, users.gender, addresses.city, addresses.state
+    FROM users
+    INNER JOIN addresses ON users.id = addresses.user_id;
 
-right table = the table which is written second in the query, in our case it is addresses
+    Using table aliases to keep queries shorter:
+    SELECT u.name, u.gender, a.city, a.state
+    FROM users u
+    INNER JOIN addresses a ON u.id = a.user_id;
 
-SELETC users.name, users.gender, addresses.city, addresses.state
-FROM users
-Right JOIN addresses ON users.id = addresses.user_id
+    u is an alias for users, a is an alias for addresses.
+    Much cleaner when table names are long or you are joining multiple tables.
 
+    Use INNER JOIN when:
+        You only want rows that have matching data in both tables.
+        e.g., show users who have placed orders (exclude users with no orders).
 
-------
-Union
+=======================================================
+2. LEFT JOIN
+=======================================================
 
-this operator helps combine the result sets of two or more select statements, it removes duplicate by default
+Returns ALL rows from the LEFT table.
+For rows in the left table with no match in the right table, the right
+table columns show NULL.
 
-If you want to include all rows including duplicates then use Union ALL - try this in practices
+Left table  = the table written first (after FROM) = users
+Right table = the table written after JOIN          = addresses
 
-Example scenario:
-we already have a users table for active users. Now, we’ll create an
-admin_users table to store users who are administrators or have special roles. We
-will then combine the names from both tables using UNION
+    SELECT users.name, users.gender, addresses.city, addresses.state
+    FROM users
+    LEFT JOIN addresses ON users.id = addresses.user_id;
 
-SELECT name FROM users
-UNION
-SELECT name from admin_users
+    Result:
+        name    | gender | city    | state
+        Alice   | Female | Mumbai  | Maharashtra
+        Bob     | Male   | Pune    | Maharashtra
+        Charlie | Male   | Delhi   | Delhi
+        Diana   | Female | NULL    | NULL        <- included, no address so NULL
 
-or 
+        Chennai (user_id 99) is still excluded -- it has no matching user.
 
-SELECT name, email FROM users
-UNION
-SELECT name, email from admin_users
+    Use LEFT JOIN when:
+        You want every row from the left table regardless of whether a match
+        exists in the right table.
+        e.g., show ALL users and their addresses if they have one.
 
+    Find rows with NO match (very common pattern):
+    SELECT users.name
+    FROM users
+    LEFT JOIN addresses ON users.id = addresses.user_id
+    WHERE addresses.user_id IS NULL;
+    -- Returns only users who have NO address at all.
+    -- Result: Diana
 
--> Below query will create a new column for the result which shows the role of that user
-SELECT name, 'User' AS role FROM users
-UNION
-SELECT name, 'Admin' AS role FROM admin_users;
+=======================================================
+3. RIGHT JOIN
+=======================================================
 
--> Order by with Union
-SELECT name,date_of_birth FROM users
-UNION
-SELECT name,date_of_birth FROM admin_users
-ORDER BY date_of_birth
+Returns ALL rows from the RIGHT table.
+For rows in the right table with no match in the left table, the left
+table columns show NULL.
 
-Rules for using union:
-1. number of columns and their data types must match in all select statement
-2. Union removes duplciate by default
-3. Union all keeps duplicate
+Right table = the table written after JOIN = addresses
+Left table  = the table written first     = users
 
-when to use:
-1, when having 2 similar tables
-2. you need to combine filtered results
-3. when performing cross category reporting
+    SELECT users.name, users.gender, addresses.city, addresses.state
+    FROM users
+    RIGHT JOIN addresses ON users.id = addresses.user_id;
 
+    Result:
+        name    | gender | city    | state
+        Alice   | Female | Mumbai  | Maharashtra
+        Bob     | Male   | Pune    | Maharashtra
+        Charlie | Male   | Delhi   | Delhi
+        NULL    | NULL   | Chennai | Tamil Nadu  <- included, no matching user
 
-----------
-Self join
+        Diana is excluded -- no address row exists for her.
 
- 
+    Use RIGHT JOIN when:
+        You want every row from the right table regardless of whether a match
+        exists in the left table.
+        e.g., show ALL addresses even if the user record has been deleted.
 
+    Practical note:
+        RIGHT JOIN is less commonly used in practice.
+        Most developers swap the table order and use LEFT JOIN instead,
+        since it reads more naturally left-to-right.
 
+        This RIGHT JOIN:
+        SELECT u.name, a.city FROM users u RIGHT JOIN addresses a ON u.id = a.user_id;
+
+        Is identical to this LEFT JOIN (tables swapped):
+        SELECT u.name, a.city FROM addresses a LEFT JOIN users u ON u.id = a.user_id;
+
+=======================================================
+JOINS -- VISUAL SUMMARY
+=======================================================
+
+    users (left)       addresses (right)
+    id: 1,2,3,4        user_id: 1,2,3,99
+
+    INNER JOIN         -- only 1,2,3     (matched on both sides)
+    LEFT JOIN          -- 1,2,3,4        (all left + NULLs for 4)
+    RIGHT JOIN         -- 1,2,3,99       (all right + NULLs for 99)
+    FULL JOIN*         -- 1,2,3,4,99     (everything, NULLs on both sides)
+
+    *MySQL does not support FULL JOIN directly.
+     Simulate it with LEFT JOIN UNION RIGHT JOIN:
+
+    SELECT u.name, a.city FROM users u
+    LEFT JOIN addresses a ON u.id = a.user_id
+    UNION
+    SELECT u.name, a.city FROM users u
+    RIGHT JOIN addresses a ON u.id = a.user_id;
+
+=======================================================
+4. SELF JOIN
+=======================================================
+
+A Self JOIN is a regular join where a table is joined with itself.
+Useful when rows within the same table are related to each other.
+
+Classic use case: referral system.
+A user can refer another user. The referred_by column stores the id of
+the user who referred them -- both referrer and referred are in the same table.
+
+    users table (with referral):
+        id | name    | referred_by
+        1  | Alice   | NULL        <- joined on their own, no referrer
+        2  | Bob     | 1           <- referred by Alice (id = 1)
+        3  | Charlie | 1           <- referred by Alice (id = 1)
+        4  | Diana   | 2           <- referred by Bob   (id = 2)
+
+    -- Show each user alongside the name of who referred them:
+    SELECT u.name AS user_name, r.name AS referred_by_name
+    FROM users u
+    LEFT JOIN users r ON u.referred_by = r.id;
+
+    Result:
+        user_name | referred_by_name
+        Alice     | NULL
+        Bob       | Alice
+        Charlie   | Alice
+        Diana     | Bob
+
+    What is happening:
+        The users table is used TWICE in the same query.
+        u = the user (child perspective)
+        r = the referrer (parent perspective, also from users)
+        MySQL treats them as two separate virtual tables because of aliasing.
+        LEFT JOIN is used so Alice (no referrer) still appears with NULL.
+
+    Other real-world uses of Self JOIN:
+        -- Employee / manager hierarchy (manager_id references id in same table)
+        -- Category / subcategory trees
+        -- Friend connections in a social network
+
+=======================================================
+5. UNION
+=======================================================
+
+UNION combines the result sets of two or more SELECT statements
+into a single result.
+It removes duplicates by default.
+
+    SELECT name FROM users
+    UNION
+    SELECT name FROM admin_users;
+
+    Rules for UNION (these are strict -- breaking them causes an error):
+        1. Number of columns must be the same in all SELECT statements
+        2. Column data types must be compatible in the same position
+        3. Column names in the result come from the FIRST SELECT statement
+        4. UNION removes duplicates by default
+        5. UNION ALL keeps all rows including duplicates (faster, no dedup step)
+
+-------------------------------------------------------
+UNION vs UNION ALL
+-------------------------------------------------------
+
+    SELECT name FROM users
+    UNION
+    SELECT name FROM admin_users;
+    -- If 'Alice' appears in both tables, she appears only ONCE in the result.
+
+    SELECT name FROM users
+    UNION ALL
+    SELECT name FROM admin_users;
+    -- If 'Alice' appears in both tables, she appears TWICE in the result.
+
+    Use UNION ALL when:
+        - You know there are no duplicates (saves processing time)
+        - You intentionally want all rows including duplicates
+        - Performance matters on large tables (UNION ALL is faster)
+
+-------------------------------------------------------
+Multiple columns with UNION
+-------------------------------------------------------
+
+    SELECT name, email FROM users
+    UNION
+    SELECT name, email FROM admin_users;
+
+    Both SELECT statements must have the same number of columns
+    in the same order with compatible types.
+
+-------------------------------------------------------
+Adding a label column to identify the source
+-------------------------------------------------------
+
+    SELECT name, 'User' AS role FROM users
+    UNION
+    SELECT name, 'Admin' AS role FROM admin_users;
+
+    Result:
+        name    | role
+        Alice   | User
+        Bob     | User
+        Diana   | Admin
+
+    'User' and 'Admin' are literal string values used to tag which table
+    each row came from. Useful for combined reporting.
+
+-------------------------------------------------------
+ORDER BY with UNION
+-------------------------------------------------------
+
+    SELECT name, dob FROM users
+    UNION
+    SELECT name, dob FROM admin_users
+    ORDER BY dob;
+
+    ORDER BY goes at the very end -- it sorts the entire combined result.
+    You cannot use ORDER BY inside individual SELECT statements in a UNION.
+
+    With a label and sorting together:
+    SELECT name, 'User' AS role, dob FROM users
+    UNION
+    SELECT name, 'Admin' AS role, dob FROM admin_users
+    ORDER BY role, name;
+
+-------------------------------------------------------
+When to use UNION
+-------------------------------------------------------
+
+    1. Two tables with the same structure (users + admin_users, jan_sales + feb_sales)
+    2. Combining filtered results from the same table:
+       SELECT name FROM users WHERE city = 'Mumbai'
+       UNION
+       SELECT name FROM users WHERE salary > 80000;
+    3. Cross-category reporting where data lives in separate tables
+       but needs to appear in one result set
+
+=======================================================
+JOINS vs UNION -- KEY DIFFERENCE
+=======================================================
+
+    JOIN  -- combines COLUMNS from multiple tables (horizontal expansion)
+             Result has more columns, same or fewer rows.
+
+    UNION -- combines ROWS from multiple queries (vertical stacking)
+             Result has more rows, same number of columns.
+
+    JOIN example:
+        users.name + addresses.city = one row with both pieces of data
+
+    UNION example:
+        users.name stacked on top of admin_users.name = more rows, same columns
+
+=======================================================
+QUICK REFERENCE
+=======================================================
+
+Join Type   | Left table rows | Right table rows | Unmatched rows
+---------------------------------------------------------------------------
+INNER JOIN  | Matched only    | Matched only     | Excluded from both sides
+LEFT JOIN   | All rows        | Matched only     | Left unmatched -> NULL right
+RIGHT JOIN  | Matched only    | All rows         | Right unmatched -> NULL left
+SELF JOIN   | Table joins itself on a related column within the same table
+
+UNION       | Stacks rows vertically, removes duplicates
+UNION ALL   | Stacks rows vertically, keeps all rows including duplicates
+
+Common typo to watch:
+    SELETC -> SELECT   (appears multiple times in original notes)
+
+=======================================================
