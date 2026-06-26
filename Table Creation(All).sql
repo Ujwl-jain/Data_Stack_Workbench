@@ -32,9 +32,15 @@
 --);
 
 
+--CREATE TABLE user_log (
+--id INT IDENTITY(1,1) PRIMARY KEY,
+--user_id INT,
+--name VARCHAR(100),
+--created_at DATETIME2 DEFAULT SYSDATETIME()
+--);
 
 SELECT * FROM users;
 SELECT * FROM admin_users;
 SELECT * FROM addresses
-
+SELECT * FROM user_log
 
