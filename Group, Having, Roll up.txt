@@ -1,0 +1,337 @@
+=======================================================
+SQL NOTES: GROUP BY AND HAVING
+=======================================================
+
+GROUP BY groups rows that share the same value in a specified column
+into a single summarized row. It is almost always used together with
+aggregate functions (COUNT, SUM, AVG, MIN, MAX).
+
+HAVING filters those GROUPS after aggregation has happened.
+It is the WHERE clause's counterpart, but for grouped/summarized data.
+
+=======================================================
+GROUP BY -- BASIC USAGE
+=======================================================
+
+    SELECT gender, AVG(salary) AS avg_salary FROM users GROUP BY gender;
+
+    NOTE: AVG(salary) AS 'AVG' -- avoid using AVG as an alias name.
+          AVG is a reserved SQL keyword (the function name itself).
+          Using it as a column alias can cause confusion or errors in
+          some contexts. Prefer a descriptive name like avg_salary.
+
+    What happens step by step:
+        Step 1: MySQL looks at the gender column and finds distinct values
+                -> Male, Female, Others
+        Step 2: All rows are bucketed into one group per distinct value
+        Step 3: AVG(salary) is calculated separately within each group
+        Step 4: One summarized row is returned per group
+
+    Before GROUP BY (raw data):
+        name    | gender | salary
+        Alice   | Female | 70000
+        Bob     | Male   | 50000
+        Charlie | Male   | 60000
+        Diana   | Female | 80000
+
+    After GROUP BY gender (with AVG):
+        gender  | avg_salary
+        Female  | 75000.00
+        Male    | 55000.00
+
+    The individual rows disappear -- you only see one row per group.
+
+-------------------------------------------------------
+The GROUP BY rule (important)
+-------------------------------------------------------
+
+    Every column in SELECT that is NOT inside an aggregate function
+    MUST appear in the GROUP BY clause.
+
+    WRONG:
+    SELECT gender, name, AVG(salary) FROM users GROUP BY gender;
+    -- ERROR: name is not in GROUP BY and not aggregated.
+    --        MySQL doesn't know which name to show for a group with
+    --        multiple rows (Alice or Diana for the Female group?)
+
+    RIGHT:
+    SELECT gender, AVG(salary) FROM users GROUP BY gender;
+    -- gender is in GROUP BY, AVG(salary) is aggregated. Valid.
+
+=======================================================
+GROUP BY WITH MULTIPLE AGGREGATE FUNCTIONS
+=======================================================
+
+You can combine multiple aggregate functions in the same query.
+Each one calculates independently within every group.
+
+    SELECT gender,
+           AVG(salary) AS avg_salary,
+           COUNT(*)    AS total_users
+    FROM users
+    GROUP BY gender;
+
+    Result:
+        gender  | avg_salary | total_users
+        Female  | 75000.00   | 2
+        Male    | 55000.00   | 2
+
+    More aggregates added:
+    SELECT gender,
+           COUNT(*)        AS total_users,
+           AVG(salary)     AS avg_salary,
+           MIN(salary)     AS min_salary,
+           MAX(salary)     AS max_salary,
+           SUM(salary)     AS total_salary
+    FROM users
+    GROUP BY gender;
+
+=======================================================
+GROUP BY ON MULTIPLE COLUMNS
+=======================================================
+
+You can group by more than one column at once.
+MySQL creates a separate group for every UNIQUE combination of the
+columns listed.
+
+    SELECT gender, city, COUNT(*) AS total
+    FROM users u
+    JOIN addresses a ON u.id = a.user_id
+    GROUP BY gender, city;
+
+    Result:
+        gender  | city    | total
+        Female  | Mumbai  | 3
+        Female  | Pune    | 1
+        Male    | Mumbai  | 2
+        Male    | Delhi   | 4
+
+    Each row represents one unique (gender, city) pairing, not just gender
+    or just city alone.
+
+=======================================================
+WHERE vs HAVING -- WHY YOU CANNOT USE WHERE AFTER GROUP BY
+=======================================================
+
+Your understanding is on the right track. Here is the precise reason,
+based on the ORDER MySQL actually processes a query (not the order
+you write it in):
+
+-------------------------------------------------------
+Actual SQL execution order (not the same as writing order)
+-------------------------------------------------------
+
+    1. FROM        -- pick the table(s)
+    2. WHERE        -- filter individual rows (before any grouping happens)
+    3. GROUP BY     -- group the filtered rows
+    4. HAVING       -- filter the GROUPS (after aggregation)
+    5. SELECT       -- choose which columns/aggregates to return
+    6. ORDER BY     -- sort the final result
+    7. LIMIT        -- restrict number of rows returned
+
+    The key insight:
+        WHERE runs BEFORE grouping happens. At that point, aggregate
+        values like AVG(salary) do not exist yet -- there are no groups
+        yet, only individual raw rows. So WHERE cannot reference an
+        aggregate function; it does not exist at that stage of execution.
+
+        HAVING runs AFTER grouping and aggregation are complete.
+        At that point, AVG(salary) per group is already calculated,
+        so HAVING can filter based on it.
+
+-------------------------------------------------------
+Your example, corrected
+-------------------------------------------------------
+
+    NOT WORKING:
+    SELECT gender, AVG(salary) AS avg_salary, COUNT(*) AS total
+    FROM users
+    GROUP BY gender
+    WHERE AVG(salary) > 60000;
+    -- ERROR: WHERE clause cannot use an aggregate function.
+    -- Also: WHERE must come BEFORE GROUP BY in the query, not after.
+
+    NOTE: Correct spelling is AVG (not ACG) -- typo in original notes.
+
+    WORKING:
+    SELECT gender, AVG(salary) AS avg_salary, COUNT(*) AS total
+    FROM users
+    GROUP BY gender
+    HAVING AVG(salary) > 60000;
+    -- Groups by gender first, calculates AVG per group,
+    -- then keeps only groups where that average exceeds 60000.
+
+-------------------------------------------------------
+WHERE and HAVING used TOGETHER
+-------------------------------------------------------
+
+This is very common in real queries -- filter rows first, group them,
+then filter the resulting groups.
+
+    SELECT gender, AVG(salary) AS avg_salary, COUNT(*) AS total
+    FROM users
+    WHERE is_active = TRUE
+    GROUP BY gender
+    HAVING AVG(salary) > 60000;
+
+    What happens:
+        Step 1 (WHERE)    : keep only active users (filters raw rows)
+        Step 2 (GROUP BY) : group the remaining active users by gender
+        Step 3 (HAVING)   : keep only gender groups where avg salary > 60000
+
+    Plain English: "among active users, show genders whose average
+                    salary is above 60000"
+
+=======================================================
+WHERE vs HAVING -- SIDE BY SIDE COMPARISON
+=======================================================
+
+    Property            | WHERE                        | HAVING
+    -----------------------------------------------------------------------
+    Filters             | Individual rows               | Groups (after aggregation)
+    Runs                | Before GROUP BY                | After GROUP BY
+    Can use aggregates   | No (AVG, SUM, COUNT not allowed)| Yes (that is its purpose)
+    Can use raw columns  | Yes                            | Yes (if also in GROUP BY)
+    Used without GROUP BY| Yes, very common               | Rare, but technically allowed
+
+    Quick rule of thumb:
+        Filtering raw data before grouping?  -> WHERE
+        Filtering summarized groups?         -> HAVING
+
+=======================================================
+HAVING WITH MULTIPLE CONDITIONS
+=======================================================
+
+    SELECT gender, AVG(salary) AS avg_salary, COUNT(*) AS total
+    FROM users
+    GROUP BY gender
+    HAVING AVG(salary) > 50000 AND COUNT(*) > 2;
+
+    Both conditions must be true for the group to appear in the result.
+    Just like WHERE, you can combine conditions using AND / OR.
+
+=======================================================
+FULL CLAUSE ORDER -- WRITING vs EXECUTION
+=======================================================
+
+How you WRITE a query (syntax order):
+    SELECT ... FROM ... WHERE ... GROUP BY ... HAVING ... ORDER BY ... LIMIT ...
+
+How MySQL actually EXECUTES it (logical order):
+    FROM -> WHERE -> GROUP BY -> HAVING -> SELECT -> ORDER BY -> LIMIT
+
+This mismatch is exactly why WHERE cannot use aggregate functions but
+HAVING can -- by the time HAVING runs, the grouping/aggregation step
+has already completed.
+
+Full example using every clause:
+    SELECT gender, AVG(salary) AS avg_salary
+    FROM users
+    WHERE is_active = TRUE
+    GROUP BY gender
+    HAVING AVG(salary) > 50000
+    ORDER BY avg_salary DESC
+    LIMIT 2;
+
+=======================================================
+QUICK REFERENCE
+=======================================================
+
+Clause      | Filters                | Runs (logical order) | Aggregate allowed
+-------------------------------------------------------------------------------
+WHERE       | Individual rows        | Before GROUP BY       | No
+GROUP BY    | Groups rows together   | After WHERE            | N/A
+HAVING      | Groups (post-aggregate)| After GROUP BY          | Yes
+
+Task                                   | Query
+------------------------------------------------------------------------------
+Group and average                      | SELECT col, AVG(x) FROM t GROUP BY col;
+Group with multiple aggregates         | SELECT col, COUNT(*), AVG(x) FROM t GROUP BY col;
+Group by multiple columns              | GROUP BY col1, col2;
+Filter rows before grouping            | WHERE condition (before GROUP BY)
+Filter groups after aggregation        | HAVING AVG(x) > value (after GROUP BY)
+Filter both                            | WHERE ... GROUP BY ... HAVING ...
+
+Common typo to watch:
+    ACG  -> AVG
+
+=======================================================
+
+=======================================================
+BONUS: WITH ROLLUP
+=======================================================
+
+ROLLUP is an extension to GROUP BY that adds extra summary rows --
+subtotals and a grand total -- on top of your normal grouped result.
+
+-------------------------------------------------------
+Basic example
+-------------------------------------------------------
+
+    SELECT gender, SUM(salary) AS total_salary
+    FROM users
+    GROUP BY gender
+    WITH ROLLUP;
+
+    Result:
+        gender  | total_salary
+        Female  | 150000
+        Male    | 110000
+        Others  | 30000
+        NULL    | 290000        <- extra ROLLUP row = grand total
+
+    The extra row at the bottom has NULL in the grouped column and
+    shows the SUM across ALL groups combined -- the grand total.
+
+-------------------------------------------------------
+ROLLUP with multiple GROUP BY columns (hierarchy)
+-------------------------------------------------------
+
+    SELECT gender, city, SUM(salary) AS total_salary
+    FROM users u
+    JOIN addresses a ON u.id = a.user_id
+    GROUP BY gender, city
+    WITH ROLLUP;
+
+    ROLLUP treats the columns as a hierarchy: gender > city.
+    It adds a subtotal row each time the higher-level group (gender)
+    changes, plus one final grand total row at the very end.
+
+    Result:
+        gender  | city    | total_salary
+        Female  | Mumbai  | 70000
+        Female  | Pune    | 80000
+        Female  | NULL    | 150000   <- subtotal for all Female
+        Male    | Delhi   | 110000
+        Male    | NULL    | 110000   <- subtotal for all Male
+        NULL    | NULL    | 260000   <- grand total
+
+    Order matters: list columns from most general to most specific
+    (e.g., gender before city) for the subtotals to make sense.
+
+-------------------------------------------------------
+Important gotchas
+-------------------------------------------------------
+
+    1. You cannot filter out ROLLUP's NULL summary rows using WHERE.
+       WHERE city IS NOT NULL  -- does NOT work as expected here,
+       because ROLLUP's NULLs are added late in query processing.
+
+    2. ORDER BY and ROLLUP together (MySQL 8.0.12+) requires GROUPING():
+       SELECT gender, SUM(salary) AS total_salary
+       FROM users
+       GROUP BY gender WITH ROLLUP
+       ORDER BY GROUPING(gender) DESC;
+       -- GROUPING(column) returns 1 for the ROLLUP summary row, 0 otherwise.
+       -- Lets you control whether the grand total appears first or last.
+
+    3. Alternative syntax (also valid):
+       SELECT gender, SUM(salary) AS total_salary
+       FROM users
+       GROUP BY ROLLUP(gender);
+
+    When to use: quick subtotal/grand total reports
+                 (e.g., sales by region with a grand total row)
+                 without writing a separate UNION query for the total.
+
+=======================================================
