@@ -1,0 +1,308 @@
+=======================================================
+SQL NOTES: STORED PROCEDURES
+=======================================================
+
+A stored procedure is a saved block of SQL code, stored in the database,
+that you can execute (call) whenever you need it.
+It is useful when you want to reuse a piece of logic multiple times
+without retyping or re-sending the full SQL every time.
+
+It is similar to a VIEW in that both are saved/reusable database objects,
+but they work completely differently (full comparison at the end).
+
+=======================================================
+DELIMITER -- WHY WE NEED TO CHANGE IT
+=======================================================
+
+By default, MySQL uses ; (semicolon) as the DELIMITER -- the character
+that tells MySQL "this statement has ended, execute it now."
+
+Problem: a stored procedure contains MULTIPLE statements internally,
+each ending in their own ; -- but the procedure ITSELF also needs an
+ending marker.
+
+    CREATE PROCEDURE select_users()
+    BEGIN
+        SELECT * FROM users;    <- MySQL sees this ; and thinks the
+    END                            ENTIRE statement has ended here.
+                                    It tries to run an incomplete,
+                                    broken CREATE PROCEDURE and fails.
+
+The fix: temporarily change the delimiter to something else (like $$)
+before defining the procedure, so the inner ; no longer means "end of
+statement" -- only $$ does.
+
+-------------------------------------------------------
+Correct procedure structure
+-------------------------------------------------------
+
+    DELIMITER $$
+
+    CREATE PROCEDURE select_users()
+    BEGIN
+        SELECT * FROM users;
+    END $$
+
+    DELIMITER ;
+
+    What is happening step by step:
+        1. DELIMITER $$       -- tell MySQL: from now on, $$ marks the
+                                  end of a statement, not ;
+        2. CREATE PROCEDURE... -- write the full procedure; any ; inside
+                                  BEGIN...END is just a normal statement
+                                  separator inside the block, not an end signal
+        3. END $$              -- NOW the procedure definition truly ends,
+                                  because $$ is the active delimiter
+        4. DELIMITER ;         -- change it back to normal immediately after,
+                                  so future queries behave as usual
+
+    IMPORTANT: Always change the delimiter back to ; right after.
+               Forgetting this means every future ; you type will not
+               execute your statements as expected.
+
+=======================================================
+CALLING A STORED PROCEDURE
+=======================================================
+
+    CALL select_users();
+
+    Executes the saved procedure.
+    Runs SELECT * FROM users; internally and returns the result,
+    exactly as if you had typed that query yourself.
+
+=======================================================
+STORED PROCEDURES WITH PARAMETERS
+=======================================================
+
+Procedures become much more useful when they accept input values,
+so the same logic can run with different data each time.
+
+-------------------------------------------------------
+IN parameters -- pass values INTO the procedure
+-------------------------------------------------------
+
+    DELIMITER $$
+
+    CREATE PROCEDURE AddUser(
+        IN p_name   VARCHAR(100),
+        IN p_email  VARCHAR(100),
+        IN p_salary INT
+    )
+    BEGIN
+        INSERT INTO users (name, email, salary)
+        VALUES (p_name, p_email, p_salary);
+
+        SELECT * FROM users;
+    END $$
+
+    DELIMITER ;
+
+    NOTE: Your original notes had Delimiter ; written BEFORE the
+          CREATE PROCEDURE block (instead of $$) and Delimiter ; written
+          again with $$ left dangling on END $$. Corrected order above:
+          DELIMITER $$ must come FIRST, before CREATE PROCEDURE,
+          and DELIMITER ; comes AFTER the closing END $$.
+
+    Calling it with actual values:
+    CALL AddUser('John', 'john@gmail.com', 97000);
+
+    What happens:
+        p_name, p_email, p_salary are placeholders.
+        When you CALL AddUser('John', 'john@gmail.com', 97000),
+        MySQL substitutes:
+            p_name   = 'John'
+            p_email  = 'john@gmail.com'
+            p_salary = 97000
+        Then runs the INSERT and SELECT using those values.
+
+    Naming convention: prefixing parameters with p_ (p_name, p_email)
+    is a common convention to avoid confusing them with actual column
+    names of the same name inside the procedure body.
+
+-------------------------------------------------------
+OUT parameters -- get a value BACK from the procedure
+-------------------------------------------------------
+
+    DELIMITER $$
+
+    CREATE PROCEDURE GetUserCount(
+        OUT total_users INT
+    )
+    BEGIN
+        SELECT COUNT(*) INTO total_users FROM users;
+    END $$
+
+    DELIMITER ;
+
+    Calling it and retrieving the result:
+    CALL GetUserCount(@count);
+    SELECT @count;
+
+    @count is a session variable that receives the OUT value.
+    INTO total_users captures the COUNT(*) result into the OUT parameter.
+    Useful when you need a calculated value back in your application
+    rather than a full result set.
+
+-------------------------------------------------------
+INOUT parameters -- pass a value in AND get a modified value back
+-------------------------------------------------------
+
+    DELIMITER $$
+
+    CREATE PROCEDURE DoubleSalary(
+        INOUT salary_value INT
+    )
+    BEGIN
+        SET salary_value = salary_value * 2;
+    END $$
+
+    DELIMITER ;
+
+    SET @sal = 30000;
+    CALL DoubleSalary(@sal);
+    SELECT @sal;    -- now 60000
+
+    INOUT combines both directions: you send a value in,
+    the procedure modifies it, and you get the new value back.
+
+-------------------------------------------------------
+IN vs OUT vs INOUT
+-------------------------------------------------------
+
+    IN     -- value goes INTO the procedure only (default, most common)
+    OUT    -- value comes OUT of the procedure only (procedure sets it)
+    INOUT  -- value goes in, gets modified, comes back out
+
+=======================================================
+DROPPING A STORED PROCEDURE
+=======================================================
+
+    DROP PROCEDURE select_users;
+
+    Safe version (no error if it does not exist):
+    DROP PROCEDURE IF EXISTS select_users;
+
+=======================================================
+VIEWING / CHECKING STORED PROCEDURES
+=======================================================
+
+    -- Check all procedures in a specific database:
+    SHOW PROCEDURE STATUS WHERE db = 'your_database_name';
+
+    -- See the actual code/definition of a procedure:
+    SHOW CREATE PROCEDURE select_users;
+
+    -- List procedures matching a name pattern:
+    SHOW PROCEDURE STATUS WHERE name LIKE '%user%';
+
+=======================================================
+COMMENTING -- BEST PRACTICE
+=======================================================
+
+Always add comments inside and around your stored procedures.
+Procedures often get reused or modified months later by someone else
+(or by you, having forgotten the details) -- comments save time.
+
+    DELIMITER $$
+
+    -- Procedure to add a new user and return the updated user list
+    CREATE PROCEDURE AddUser(
+        IN p_name   VARCHAR(100),  -- full name of the user
+        IN p_email  VARCHAR(100),  -- must be unique
+        IN p_salary INT            -- annual salary
+    )
+    BEGIN
+        -- Insert the new user record
+        INSERT INTO users (name, email, salary)
+        VALUES (p_name, p_email, p_salary);
+
+        -- Return the full updated table for confirmation
+        SELECT * FROM users;
+    END $$
+
+    DELIMITER ;
+
+=======================================================
+PROCEDURE WITH CONDITIONAL LOGIC (BONUS)
+=======================================================
+
+Stored procedures can contain IF statements, loops, and variables --
+real programming logic, not just a single SELECT.
+
+    DELIMITER $$
+
+    CREATE PROCEDURE CategorizeSalary(
+        IN  p_user_id INT,
+        OUT p_category VARCHAR(20)
+    )
+    BEGIN
+        DECLARE v_salary INT;
+
+        SELECT salary INTO v_salary FROM users WHERE id = p_user_id;
+
+        IF v_salary > 80000 THEN
+            SET p_category = 'High';
+        ELSEIF v_salary > 50000 THEN
+            SET p_category = 'Medium';
+        ELSE
+            SET p_category = 'Low';
+        END IF;
+    END $$
+
+    DELIMITER ;
+
+    CALL CategorizeSalary(1, @result);
+    SELECT @result;
+
+    DECLARE -- creates a local variable inside the procedure (v_salary)
+    SELECT ... INTO -- stores a query result into a variable
+    IF / ELSEIF / ELSE / END IF -- conditional branching, just like other
+                                    programming languages
+
+=======================================================
+VIEW vs STORED PROCEDURE -- KEY DIFFERENCES
+=======================================================
+
+    Property              | VIEW                         | STORED PROCEDURE
+    ------------------------------------------------------------------------------
+    What it is             | A saved SELECT query         | A saved block of SQL logic
+    Can contain             | Only one SELECT statement    | Multiple statements (INSERT,
+                            |                               | UPDATE, DELETE, IF, loops, etc.)
+    Accepts parameters       | No                           | Yes (IN, OUT, INOUT)
+    How you use it           | SELECT * FROM view_name      | CALL procedure_name(args);
+    Can modify data           | Rarely, and discouraged      | Yes, that is a primary use case
+    Returns                  | A virtual table, always       | Optional -- can return a result
+                            | live/queryable                | set, an OUT value, nothing, or
+                            |                                | multiple result sets
+    Used for                 | Simplifying/reusing a query, | Reusable business logic,
+                            | hiding columns, live filters   | multi-step operations,
+                            |                                | calculations, automation
+    Can be used inside       | Yes, like a normal table       | No, cannot be used inside
+    another query (JOIN etc.)|                                | another SELECT/JOIN directly
+
+    Simple way to remember:
+        VIEW       -- a saved way to LOOK at data (read-focused)
+        PROCEDURE  -- a saved way to DO something with data (action-focused)
+
+=======================================================
+QUICK REFERENCE
+=======================================================
+
+Task                                  | Query
+------------------------------------------------------------------------------
+Change delimiter                      | DELIMITER $$
+Change delimiter back                 | DELIMITER ;
+Create a procedure                    | CREATE PROCEDURE name() BEGIN ... END $$
+Call a procedure                      | CALL name();
+Call with input values                | CALL name('value1', 'value2');
+Get an OUT value back                 | CALL name(@var); SELECT @var;
+Drop a procedure                      | DROP PROCEDURE name;
+Drop safely                           | DROP PROCEDURE IF EXISTS name;
+Check procedures in a database        | SHOW PROCEDURE STATUS WHERE db = 'dbname';
+See procedure's full code             | SHOW CREATE PROCEDURE name;
+
+Common mistake to avoid:
+    Forgetting to change DELIMITER back to ; after creating the procedure.
+    Order must be: DELIMITER $$ -> CREATE PROCEDURE...END $$ -> DELIMITER ;
+
+=======================================================
