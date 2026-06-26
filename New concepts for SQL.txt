@@ -16,4 +16,289 @@ INSERT INTO addresses(user_id, street, city, state, pincode)
 VALUES (SCOPE_IDENTITY(), 'Vishwas Nagar', 'Delhi', 'Delhi', '110032');
 
 --------------------------------------
+Difference between the syntax of MySQL and SSMS
 
+=======================================================
+MySQL vs MS SQL Server (T-SQL) -- SYNTAX DIFFERENCES
+=======================================================
+
+SSMS = SQL Server Management Studio
+      It is just the GUI tool (like MySQL Workbench is for MySQL).
+      The actual database is Microsoft SQL Server (MSSQL).
+      The query language SQL Server uses is called T-SQL (Transact-SQL).
+
+The core concepts are identical in both:
+SELECT, INSERT, UPDATE, DELETE, JOIN, GROUP BY, WHERE, etc.
+The DIFFERENCES are in specific syntax, functions, and keywords.
+
+=======================================================
+SIDE BY SIDE COMPARISON
+=======================================================
+
+-------------------------------------------------------
+1. Limiting rows returned
+-------------------------------------------------------
+
+    MySQL:
+    SELECT * FROM users ORDER BY salary DESC LIMIT 10;
+
+    SQL Server (T-SQL):
+    SELECT TOP 10 * FROM users ORDER BY salary DESC;
+
+    -- SQL Server also supports ANSI standard syntax (2012+):
+    SELECT * FROM users ORDER BY salary DESC
+    OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY;
+
+    Key difference:
+        MySQL  -- LIMIT goes at the END of the query
+        T-SQL  -- TOP goes right after SELECT at the BEGINNING
+
+-------------------------------------------------------
+2. Auto increment
+-------------------------------------------------------
+
+    MySQL:
+    CREATE TABLE users (
+        id INT AUTO_INCREMENT PRIMARY KEY
+    );
+
+    SQL Server (T-SQL):
+    CREATE TABLE users (
+        id INT IDENTITY(1,1) PRIMARY KEY
+    );
+
+    IDENTITY(1,1) means: start at 1, increment by 1.
+    IDENTITY(100,5) would start at 100 and go 100, 105, 110...
+    AUTO_INCREMENT in MySQL always starts at 1 by default
+    (you change it with ALTER TABLE users AUTO_INCREMENT = 1000).
+
+-------------------------------------------------------
+3. String concatenation
+-------------------------------------------------------
+
+    MySQL:
+    SELECT CONCAT(first_name, ' ', last_name) AS full_name FROM users;
+
+    SQL Server (T-SQL):
+    SELECT first_name + ' ' + last_name AS full_name FROM users;
+    -- SQL Server 2012+ also supports CONCAT():
+    SELECT CONCAT(first_name, ' ', last_name) AS full_name FROM users;
+
+-------------------------------------------------------
+4. String length function
+-------------------------------------------------------
+
+    MySQL:
+    SELECT LENGTH(name) FROM users;
+
+    SQL Server (T-SQL):
+    SELECT LEN(name) FROM users;
+
+    Same result, different function name.
+
+-------------------------------------------------------
+5. Current date and time
+-------------------------------------------------------
+
+    MySQL:
+    SELECT NOW();        -- date + time
+    SELECT CURDATE();    -- date only
+    SELECT CURTIME();    -- time only
+
+    SQL Server (T-SQL):
+    SELECT GETDATE();    -- date + time
+    SELECT GETDATE();    -- no separate CURDATE(), cast it:
+    SELECT CAST(GETDATE() AS DATE);   -- date only
+    SELECT CAST(GETDATE() AS TIME);   -- time only
+
+-------------------------------------------------------
+6. Quoting identifiers (table/column names)
+-------------------------------------------------------
+
+    MySQL:
+    SELECT `name`, `email` FROM `users`;
+    -- uses backticks for identifiers
+
+    SQL Server (T-SQL):
+    SELECT [name], [email] FROM [users];
+    -- uses square brackets for identifiers
+
+    Both: quoting is optional when the name has no spaces or reserved words.
+    Required when column/table name is a reserved word or has spaces.
+
+-------------------------------------------------------
+7. Stored procedures
+-------------------------------------------------------
+
+    MySQL:
+    DELIMITER $$
+    CREATE PROCEDURE GetUsers()
+    BEGIN
+        SELECT * FROM users;
+    END $$
+    DELIMITER ;
+
+    CALL GetUsers();
+
+    SQL Server (T-SQL):
+    CREATE PROCEDURE GetUsers
+    AS
+    BEGIN
+        SELECT * FROM users;
+    END;
+
+    EXEC GetUsers;
+    -- or
+    EXECUTE GetUsers;
+
+    Key differences:
+        MySQL  -- needs DELIMITER change, uses BEGIN...END, called with CALL
+        T-SQL  -- no DELIMITER needed, uses AS BEGIN...END, called with EXEC
+
+-------------------------------------------------------
+8. IF statement inside procedures
+-------------------------------------------------------
+
+    MySQL:
+    IF salary > 50000 THEN
+        SET result = 'High';
+    ELSE
+        SET result = 'Low';
+    END IF;
+
+    SQL Server (T-SQL):
+    IF salary > 50000
+        SET @result = 'High';
+    ELSE
+        SET @result = 'Low';
+    -- No END IF in T-SQL
+
+-------------------------------------------------------
+9. Variables
+-------------------------------------------------------
+
+    MySQL:
+    DECLARE v_salary INT;           -- inside a procedure
+    SET v_salary = 50000;
+
+    SET @session_var = 50000;       -- session variable, usable anywhere
+
+    SQL Server (T-SQL):
+    DECLARE @salary INT;            -- always uses @ prefix
+    SET @salary = 50000;
+    -- or
+    SELECT @salary = salary FROM users WHERE id = 1;
+
+    Key difference:
+        MySQL  -- local variables (no @), session variables (with @)
+        T-SQL  -- ALL variables use @ prefix, declared with DECLARE
+
+-------------------------------------------------------
+10. ENUM data type
+-------------------------------------------------------
+
+    MySQL:
+    gender ENUM('Male', 'Female', 'Others')
+    -- built-in data type
+
+    SQL Server (T-SQL):
+    -- No ENUM type. Use CHECK constraint instead:
+    gender VARCHAR(10) CHECK (gender IN ('Male', 'Female', 'Others'))
+
+-------------------------------------------------------
+11. SHOW commands (MySQL-only)
+-------------------------------------------------------
+
+    MySQL:
+    SHOW TABLES;
+    SHOW DATABASES;
+    SHOW INDEXES FROM users;
+    SHOW PROCEDURE STATUS WHERE db = 'mydb';
+    SHOW CREATE TABLE users;
+
+    SQL Server (T-SQL) equivalents:
+    SELECT * FROM INFORMATION_SCHEMA.TABLES;
+    SELECT name FROM sys.databases;
+    SELECT * FROM sys.indexes WHERE object_id = OBJECT_ID('users');
+    SELECT * FROM sys.procedures;
+    -- No direct SHOW commands; use system catalog views instead.
+
+-------------------------------------------------------
+12. DELIMITER
+-------------------------------------------------------
+
+    MySQL:
+    -- Needs DELIMITER change for stored procedures (as covered in notes)
+    DELIMITER $$
+    ...
+    END $$
+    DELIMITER ;
+
+    SQL Server (T-SQL):
+    -- No DELIMITER concept. Uses GO as a batch separator instead.
+    -- GO is not a T-SQL command, it is an SSMS instruction.
+    SELECT * FROM users;
+    GO
+    SELECT * FROM orders;
+    GO
+
+-------------------------------------------------------
+13. ISNULL / IFNULL / COALESCE
+-------------------------------------------------------
+
+    MySQL:
+    SELECT IFNULL(salary, 0) FROM users;
+    -- Returns 0 if salary is NULL
+
+    SQL Server (T-SQL):
+    SELECT ISNULL(salary, 0) FROM users;
+    -- Same behaviour, different function name
+
+    Both support COALESCE (ANSI standard, works in both):
+    SELECT COALESCE(salary, 0) FROM users;
+    -- Preferred if writing code that might run on both databases.
+
+=======================================================
+WHAT IS THE SAME IN BOTH (no change needed)
+=======================================================
+
+    These work identically in MySQL and SQL Server:
+        SELECT, FROM, WHERE, ORDER BY, GROUP BY, HAVING
+        INSERT INTO, UPDATE SET, DELETE FROM
+        INNER JOIN, LEFT JOIN, RIGHT JOIN
+        COUNT(), SUM(), AVG(), MIN(), MAX()
+        ROUND(), FLOOR(), CEIL()
+        CASE WHEN ... THEN ... ELSE ... END
+        COALESCE()
+        IS NULL, IS NOT NULL
+        AND, OR, NOT, IN, NOT IN, BETWEEN, LIKE
+        PRIMARY KEY, FOREIGN KEY, UNIQUE, NOT NULL, DEFAULT
+        CREATE TABLE, ALTER TABLE, DROP TABLE
+        Transactions: BEGIN TRANSACTION / COMMIT / ROLLBACK
+        VIEWS: CREATE VIEW, DROP VIEW
+
+    The core SQL you have been learning applies to BOTH databases.
+    The differences are mostly in function names and a few keywords.
+
+=======================================================
+QUICK REFERENCE CHEAT SHEET
+=======================================================
+
+Feature               | MySQL                    | SQL Server (T-SQL)
+------------------------------------------------------------------------
+Limit rows            | LIMIT 10                 | TOP 10
+Auto increment        | AUTO_INCREMENT            | IDENTITY(1,1)
+Current datetime      | NOW()                    | GETDATE()
+Current date only     | CURDATE()                | CAST(GETDATE() AS DATE)
+String length         | LENGTH()                 | LEN()
+String join           | CONCAT()                 | + operator or CONCAT()
+Quote identifiers     | `backticks`              | [square brackets]
+NULL replacement      | IFNULL(col, val)         | ISNULL(col, val)
+Call a procedure      | CALL proc_name()         | EXEC proc_name
+Procedure body        | BEGIN...END with DELIM   | AS BEGIN...END
+Variables             | DECLARE v_x INT (no @)   | DECLARE @x INT (with @)
+ENUM type             | ENUM('A','B')            | CHECK(col IN ('A','B'))
+List tables           | SHOW TABLES              | SELECT * FROM INFORMATION_SCHEMA.TABLES
+Batch separator       | ; (semicolon)            | GO (in SSMS)
+
+=======================================================
