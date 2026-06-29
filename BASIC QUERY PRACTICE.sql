@@ -1,5 +1,6 @@
 -- SQL PRACTISE SESSION (EASY QUESTION) 
 
+USE SQL_Learning
 -- TABLE TO USE
 -- users
 SELECT * FROM users
@@ -104,6 +105,46 @@ SELECT * FROM addresses WHERE city = 'Mumbai' or city = 'Delhi';
 	
 	SELECT SUM(salary) as total_salary_expense FROM users where gender = 'Male';
 
+-----------------------------------------------------------------------
+-- JOINS AND UNION
+-----------------------------------------------------------------------
+
+--Q31 [BASIC]  Write an INNER JOIN between users and addresses
+--             to get user name and their city.
+	
+	SELECT u.name, a.city FROM users u
+	INNER JOIN addresses a ON u.id = a.user_id;
+
+--Q32 [BASIC]  Write a LEFT JOIN to get all users along with their
+--             address (show NULL if no address exists).
+
+	SELECT * FROM users
+	LEFT JOIN addresses ON users.id = addresses.user_id;
+
+--Q33 [BASIC]  Find all users who do NOT have an entry in the
+--             addresses table using LEFT JOIN.
+
+	SELECT * FROM users
+	LEFT JOIN addresses ON users.id = addresses.user_id
+	WHERE addresses.user_id is NULL;
+
+	-- Subquery approach (alternative to LEFT JOIN + IS NULL)
+	SELECT * FROM users
+	WHERE id NOT IN (SELECT user_id FROM addresses);
+
+--Q39 [BASIC]  Use UNION to combine name and email from
+--             users and admin_users.
+	
+	SELECT name, email FROM users
+	UNION
+	SELECT name,email FROM admin_users
+
+--Q40 [BASIC]  Use UNION ALL to combine users and admin_users
+--             without removing duplicates.
+
+	SELECT name, email FROM users
+	UNION ALL
+	SELECT name,email FROM admin_users
 
 -----------------------------------------------------------------------
 -- DDL AND DML COMMANDS
