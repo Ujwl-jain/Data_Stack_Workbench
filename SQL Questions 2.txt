@@ -1,0 +1,365 @@
+=============================================================
+SQL PRACTICE HANDBOOK - BATCH 2
+=============================================================
+Tables: users, addresses, admin_users, user_log
+Level: Easy to Medium
+Total Questions: 90
+=============================================================
+
+
+=============================================================
+TOPIC 1 - DDL, DML, AND BASIC QUERIES
+=============================================================
+
+Q1  [EASY]   Create a new table called departments with columns:
+             id INT PRIMARY KEY, dept_name VARCHAR(100),
+             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP.
+
+Q2  [EASY]   Drop the departments table if it exists.
+
+Q3  [EASY]   Truncate the user_log table.
+
+Q4  [EASY]   Add a column is_active TINYINT(1) DEFAULT 1
+             to the users table.
+
+Q5  [EASY]   Drop the column is_active from the users table.
+
+Q6  [EASY]   Insert 3 rows into admin_users in a single
+             INSERT statement.
+
+Q7  [EASY]   Update the name of the user with id = 2
+             to 'Rahul Sharma'.
+
+Q8  [EASY]   Delete all users whose salary is NULL.
+
+Q9  [EASY]   Copy all rows from users into admin_users
+             using INSERT INTO ... SELECT.
+
+Q10 [EASY]   Change the data type of salary in admin_users
+             from INT to DECIMAL(10,2).
+
+Q11 [MEDIUM] Add a CHECK constraint to users so that salary
+             must be greater than 0.
+
+Q12 [MEDIUM] Add a DEFAULT value of 'Other' to the gender
+             column of users.
+
+Q13 [MEDIUM] Write an UPDATE to set salary = 40000 for all
+             users where salary IS NULL.
+
+Q14 [MEDIUM] Delete all addresses where the pincode is NULL.
+
+Q15 [MEDIUM] Rename the table user_log to login_log,
+             then rename it back to user_log.
+
+
+=============================================================
+TOPIC 2 - FUNCTIONS
+=============================================================
+
+-- String Functions
+
+Q16 [EASY]   Select the name of all users in UPPERCASE.
+
+Q17 [EASY]   Select the name of all users in lowercase.
+
+Q18 [EASY]   Select the length of each user's name.
+
+Q19 [EASY]   Trim leading and trailing spaces from the name
+             column and display the result.
+
+Q20 [EASY]   Concatenate name and email as 'name - email'
+             for all users.
+
+Q21 [MEDIUM] Extract the domain part from each user's email
+             (everything after '@').
+
+Q22 [MEDIUM] Replace '@gmail.com' with '@company.com' in
+             all email values (display only, do not update).
+
+Q23 [MEDIUM] Select the first 5 characters of each user's name.
+
+Q24 [MEDIUM] Find users whose name has more than 10 characters.
+
+Q25 [MEDIUM] Reverse the name of each user and display it.
+
+-- Date Functions
+
+Q26 [EASY]   Select the current date and current timestamp.
+
+Q27 [EASY]   Select the year of birth from date_of_birth
+             for all users.
+
+Q28 [EASY]   Select the month and day from date_of_birth
+             for all users.
+
+Q29 [MEDIUM] Calculate the age of each user in years
+             using date_of_birth and current date.
+
+Q30 [MEDIUM] Find all users whose birthday falls in the
+             current month.
+
+Q31 [MEDIUM] Find users who were created in the last 30 days.
+
+Q32 [MEDIUM] Format created_at as 'DD-MM-YYYY' for all users.
+
+-- Numeric Functions
+
+Q33 [EASY]   Round the salary of all users to the nearest
+             hundred.
+
+Q34 [EASY]   Select the floor and ceiling of salary / 1000
+             for all users.
+
+Q35 [MEDIUM] Find the absolute difference between each user's
+             salary and the average salary.
+
+
+=============================================================
+TOPIC 3 - TRANSACTIONS AND AUTOCOMMIT
+=============================================================
+
+Q36 [EASY]   Write a transaction that inserts a new user and
+             a new address for that user. COMMIT at the end.
+
+Q37 [EASY]   Write a transaction that updates a user's salary
+             and then rolls back the change.
+
+Q38 [EASY]   Disable autocommit, insert a row into user_log,
+             then commit manually.
+
+Q39 [MEDIUM] Write a transaction that:
+             - Inserts a row into users
+             - Inserts a matching row into addresses
+             - If either fails, ROLLBACK both.
+             Show the structure with proper BEGIN and COMMIT.
+
+Q40 [MEDIUM] Write a transaction that updates salary of
+             user id = 1 to 90000, creates a SAVEPOINT,
+             then updates it again to 95000, then rolls
+             back to the SAVEPOINT only.
+
+Q41 [MEDIUM] Explain with a working example the difference
+             between COMMIT and ROLLBACK by writing two
+             separate transaction blocks on the users table.
+
+
+=============================================================
+TOPIC 4 - GROUP BY, HAVING, ROLLUP
+=============================================================
+
+Q42 [EASY]   Count the number of users grouped by gender.
+
+Q43 [EASY]   Find the total salary grouped by gender.
+
+Q44 [EASY]   Find the average salary grouped by city
+             (join users and addresses).
+
+Q45 [EASY]   Find the maximum salary in each state
+             (join users and addresses).
+
+Q46 [MEDIUM] Count users grouped by gender, but only
+             include groups where count > 2.
+
+Q47 [MEDIUM] Find cities where the average salary is
+             greater than 50000.
+
+Q48 [MEDIUM] Find the total number of logins per user
+             from user_log using GROUP BY user_id.
+
+Q49 [MEDIUM] Group users by year of date_of_birth and
+             count how many users were born each year.
+
+Q50 [MEDIUM] Use ROLLUP on gender to show total salary
+             per gender plus an overall grand total.
+
+Q51 [MEDIUM] Use GROUP BY on city and gender together
+             (join users and addresses) and find the
+             average salary for each combination.
+
+
+=============================================================
+TOPIC 5 - JOINS
+=============================================================
+
+Q52 [EASY]   INNER JOIN users and addresses. Show user name,
+             street, and city.
+
+Q53 [EASY]   LEFT JOIN users and addresses. Show all users
+             even if they have no address.
+
+Q54 [EASY]   RIGHT JOIN addresses and users. Show all
+             addresses even if the user is deleted.
+
+Q55 [EASY]   CROSS JOIN users and admin_users to produce
+             all possible combinations of name pairs.
+
+Q56 [MEDIUM] Join users, addresses, and user_log together.
+             Show name, city, and total login count
+             per user.
+
+Q57 [MEDIUM] Find users who have addresses in more than
+             one city.
+
+Q58 [MEDIUM] Join users and admin_users on email to find
+             records where salary differs between the
+             two tables.
+
+Q59 [MEDIUM] Using a self-join on users, find all users
+             who have the same salary as another user.
+
+Q60 [MEDIUM] Find the user with the most recent login
+             from user_log using JOIN and ORDER BY.
+
+
+=============================================================
+TOPIC 6 - SET OPERATIONS
+=============================================================
+
+Q61 [EASY]   Use UNION to get all unique names from both
+             users and admin_users.
+
+Q62 [EASY]   Use UNION ALL to get all names from both
+             users and admin_users including duplicates.
+
+Q63 [EASY]   Find emails that are present in users but
+             NOT in admin_users using NOT IN.
+
+Q64 [MEDIUM] Find emails common to both users and
+             admin_users using a JOIN (simulating INTERSECT).
+
+Q65 [MEDIUM] Use UNION to combine Male users from users
+             with Male users from admin_users, and count
+             the total.
+
+Q66 [MEDIUM] Find names that appear in users but not in
+             admin_users, and also names that appear in
+             admin_users but not in users. Show both
+             results together using UNION.
+
+
+=============================================================
+TOPIC 7 - SUBQUERIES
+=============================================================
+
+Q67 [EASY]   Find all users whose salary is greater than
+             the average salary using a subquery.
+
+Q68 [EASY]   Find the user with the highest salary
+             using a subquery in WHERE.
+
+Q69 [EASY]   Find all users who have at least one record
+             in user_log using IN subquery.
+
+Q70 [EASY]   Find all users who have no record in
+             user_log using NOT IN subquery.
+
+Q71 [MEDIUM] Find users whose salary is higher than
+             every user in admin_users using ALL.
+
+Q72 [MEDIUM] Find users whose salary is higher than
+             at least one user in admin_users using ANY.
+
+Q73 [MEDIUM] Use a correlated subquery to find users
+             who have more than the average number of
+             addresses.
+
+Q74 [MEDIUM] Use EXISTS to find users who have logged
+             in at least once (check against user_log).
+
+Q75 [MEDIUM] Use a subquery in SELECT clause to show
+             each user's name and their total login
+             count from user_log.
+
+Q76 [MEDIUM] Use a derived table (subquery in FROM) to
+             show the top 3 cities by average salary.
+
+
+=============================================================
+TOPIC 8 - VIEWS
+=============================================================
+
+Q77 [EASY]   Create a view called v_user_details that
+             shows id, name, email, and gender from users.
+
+Q78 [EASY]   Select all data from the view v_user_details.
+
+Q79 [EASY]   Drop the view v_user_details.
+
+Q80 [MEDIUM] Create a view called v_user_city that joins
+             users and addresses and shows name, email,
+             city, and state.
+
+Q81 [MEDIUM] Create a view called v_high_earners that
+             shows users with salary greater than 60000.
+
+Q82 [MEDIUM] Create a view called v_gender_salary_summary
+             that shows gender, count of users, and
+             average salary grouped by gender.
+
+Q83 [MEDIUM] Query the view v_user_city to find all users
+             from state 'Maharashtra'.
+
+Q84 [MEDIUM] Create a view v_login_count that shows
+             user_id, name, and total login count from
+             user_log. Then query it to find users
+             with more than 3 logins.
+
+
+=============================================================
+TOPIC 9 - INDEXES
+=============================================================
+
+Q85 [EASY]   Create a single-column index on the email
+             column of the users table.
+
+Q86 [EASY]   Create an index on the city column of
+             the addresses table.
+
+Q87 [EASY]   Drop the index you created on the email
+             column of users.
+
+Q88 [MEDIUM] Create a composite index on (user_id, city)
+             in the addresses table.
+
+Q89 [MEDIUM] Create a UNIQUE index on the email column
+             of admin_users.
+
+Q90 [MEDIUM] Write a query using EXPLAIN to check whether
+             MySQL is using an index when filtering
+             users by email.
+
+
+=============================================================
+PROGRESS TRACKER - BATCH 2
+=============================================================
+
+Topic                        Total   Done
+-----------------------------+-------+-----
+DDL, DML & Basic Queries     | 15    |
+Functions                    | 20    |
+Transactions & Autocommit    |  6    |
+Group By, Having, Rollup     | 10    |
+Joins                        |  9    |
+Set Operations               |  6    |
+Subqueries                   | 10    |
+Views                        |  8    |
+Indexes                      |  6    |
+-----------------------------+-------+-----
+TOTAL                        | 90    |
+
+=============================================================
+COMBINED PROGRESS (BATCH 1 + BATCH 2)
+=============================================================
+
+Batch 1   64 questions
+Batch 2   90 questions
+TOTAL    154 questions
+
+=============================================================
+NOTE: All questions use these tables:
+  - users
+  - addresses
+  - admin_users
+  - user_log
+=============================================================
