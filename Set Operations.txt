@@ -1,0 +1,330 @@
+=======================================================
+SQL NOTES: SET OPERATIONS
+=======================================================
+
+Set operations combine the results of two or more SELECT statements
+into a single result set.
+
+They work on entire RESULT SETS (rows), not on columns like JOINs do.
+Think of them like mathematical set theory -- union, intersection,
+difference between two collections of rows.
+
+Reference tables used throughout these notes:
+
+    users table:                    admin_users table:
+    id | name    | email            id | name    | email
+    1  | Alice   | alice@gmail.com  1  | Alice   | alice@gmail.com
+    2  | Bob     | bob@gmail.com    2  | Diana   | diana@gmail.com
+    3  | Charlie | charlie@gmail.com 3 | Eve     | eve@gmail.com
+    4  | Diana   | diana@gmail.com
+
+    Note: Alice and Diana appear in BOTH tables.
+          Bob and Charlie are only in users.
+          Eve is only in admin_users.
+
+Rules that apply to ALL set operations:
+    1. Number of columns must be the same in all SELECT statements
+    2. Data types of columns must be compatible in the same position
+    3. Column names in the result come from the FIRST SELECT statement
+    4. ORDER BY can only appear once, at the very end of the entire query
+
+=======================================================
+1. UNION
+=======================================================
+
+Combines results of two SELECT statements.
+Removes duplicate rows automatically.
+
+    SELECT name, email FROM users
+    UNION
+    SELECT name, email FROM admin_users;
+
+    Result:
+        name    | email
+        Alice   | alice@gmail.com    <- appears in both, shown ONCE
+        Bob     | bob@gmail.com
+        Charlie | charlie@gmail.com
+        Diana   | diana@gmail.com    <- appears in both, shown ONCE
+        Eve     | eve@gmail.com
+
+    Alice and Diana were in both tables but appear only once.
+    UNION deduplicates by comparing the entire row.
+
+-------------------------------------------------------
+UNION ALL -- keep all rows including duplicates
+-------------------------------------------------------
+
+    SELECT name, email FROM users
+    UNION ALL
+    SELECT name, email FROM admin_users;
+
+    Result:
+        name    | email
+        Alice   | alice@gmail.com    <- from users
+        Bob     | bob@gmail.com
+        Charlie | charlie@gmail.com
+        Diana   | diana@gmail.com    <- from users
+        Alice   | alice@gmail.com    <- from admin_users (duplicate kept)
+        Diana   | diana@gmail.com    <- from admin_users (duplicate kept)
+        Eve     | eve@gmail.com
+
+    UNION ALL does NOT remove duplicates.
+    It is faster than UNION because no deduplication step is performed.
+
+    UNION vs UNION ALL:
+        UNION     -- removes duplicates, extra processing, slower
+        UNION ALL -- keeps everything, no extra processing, faster
+        Use UNION ALL when you know there are no duplicates,
+        or when you intentionally want all rows.
+
+-------------------------------------------------------
+UNION with a label column
+-------------------------------------------------------
+
+    SELECT name, email, 'User' AS role FROM users
+    UNION
+    SELECT name, email, 'Admin' AS role FROM admin_users;
+
+    Result:
+        name    | email              | role
+        Alice   | alice@gmail.com    | User     <- User version kept
+        Bob     | bob@gmail.com      | User
+        Charlie | charlie@gmail.com  | User
+        Diana   | diana@gmail.com    | User     <- User version kept
+        Alice   | alice@gmail.com    | Admin    <- now different row (role differs)
+        Diana   | diana@gmail.com    | Admin    <- now different row (role differs)
+        Eve     | eve@gmail.com      | Admin
+
+    Adding the role column means Alice (User) and Alice (Admin) are now
+    different rows -- the full row is no longer a duplicate.
+    So UNION keeps both.
+
+-------------------------------------------------------
+UNION with ORDER BY
+-------------------------------------------------------
+
+    SELECT name, email FROM users
+    UNION
+    SELECT name, email FROM admin_users
+    ORDER BY name ASC;
+
+    ORDER BY applies to the ENTIRE combined result.
+    It goes at the very end -- never inside individual SELECT statements.
+
+    With label and sorting:
+    SELECT name, 'User' AS role FROM users
+    UNION
+    SELECT name, 'Admin' AS role FROM admin_users
+    ORDER BY role, name;
+
+=======================================================
+2. INTERSECT
+=======================================================
+
+Returns ONLY rows that appear in BOTH result sets.
+Think of it as "what do these two sets have in common?"
+
+    SELECT name, email FROM users
+    INTERSECT
+    SELECT name, email FROM admin_users;
+
+    Result:
+        name  | email
+        Alice | alice@gmail.com
+        Diana | diana@gmail.com
+
+    Only Alice and Diana appear -- they exist in both tables.
+    Bob, Charlie (only in users) and Eve (only in admin_users) are excluded.
+
+-------------------------------------------------------
+IMPORTANT: MySQL does NOT support INTERSECT natively
+-------------------------------------------------------
+
+    MySQL versions before 8.0.31 do not have INTERSECT.
+    MySQL 8.0.31+ added INTERSECT support.
+
+    Check your MySQL version:
+    SELECT VERSION();
+
+    If your version does not support INTERSECT, simulate it with
+    INNER JOIN or IN subquery:
+
+    -- Simulate INTERSECT using INNER JOIN:
+    SELECT DISTINCT u.name, u.email
+    FROM users u
+    INNER JOIN admin_users a
+        ON u.name = a.name AND u.email = a.email;
+
+    -- Simulate INTERSECT using IN:
+    SELECT name, email FROM users
+    WHERE email IN (SELECT email FROM admin_users);
+
+    Both produce the same result as INTERSECT.
+    The IN subquery version is simpler and more readable.
+
+    SQL Server (T-SQL) / SSMS:
+    INTERSECT is fully supported -- no workaround needed.
+
+=======================================================
+3. EXCEPT / MINUS
+=======================================================
+
+Returns rows from the FIRST SELECT that do NOT appear in the SECOND.
+Think of it as "what is in A but not in B?"
+
+    -- Rows in users but NOT in admin_users:
+    SELECT name, email FROM users
+    EXCEPT
+    SELECT name, email FROM admin_users;
+
+    Result:
+        name    | email
+        Bob     | bob@gmail.com
+        Charlie | charlie@gmail.com
+
+    Alice and Diana are excluded (they exist in admin_users too).
+    Eve is excluded (she is only in admin_users, not in the first SELECT).
+
+    Flip the order to get the opposite:
+    -- Rows in admin_users but NOT in users:
+    SELECT name, email FROM admin_users
+    EXCEPT
+    SELECT name, email FROM users;
+
+    Result:
+        name | email
+        Eve  | eve@gmail.com
+
+    Order matters with EXCEPT. A EXCEPT B is different from B EXCEPT A.
+
+-------------------------------------------------------
+IMPORTANT: MySQL does NOT support EXCEPT natively
+-------------------------------------------------------
+
+    MySQL versions before 8.0.31 do not have EXCEPT.
+    MySQL 8.0.31+ added EXCEPT support.
+
+    Simulate EXCEPT using LEFT JOIN with IS NULL:
+
+    -- Rows in users but NOT in admin_users:
+    SELECT DISTINCT u.name, u.email
+    FROM users u
+    LEFT JOIN admin_users a
+        ON u.email = a.email
+    WHERE a.email IS NULL;
+
+    -- Simulate using NOT IN:
+    SELECT name, email FROM users
+    WHERE email NOT IN (SELECT email FROM admin_users);
+
+    -- Simulate using NOT EXISTS:
+    SELECT name, email FROM users u
+    WHERE NOT EXISTS (
+        SELECT 1 FROM admin_users a WHERE a.email = u.email
+    );
+
+    All three produce the same result as EXCEPT.
+
+    SQL Server (T-SQL) / SSMS:
+    EXCEPT is fully supported -- no workaround needed.
+    Note: Oracle uses MINUS instead of EXCEPT (same thing, different name).
+
+=======================================================
+4. UNION used as FULL OUTER JOIN simulation
+=======================================================
+
+MySQL does not support FULL OUTER JOIN directly.
+UNION can simulate it by combining LEFT JOIN and RIGHT JOIN:
+
+    SELECT u.name, u.email, a.email AS admin_email
+    FROM users u
+    LEFT JOIN admin_users a ON u.email = a.email
+    UNION
+    SELECT u.name, u.email, a.email AS admin_email
+    FROM users u
+    RIGHT JOIN admin_users a ON u.email = a.email;
+
+    Returns all rows from both tables.
+    NULLs appear where there is no match on either side.
+
+=======================================================
+SET OPERATIONS -- VISUAL SUMMARY
+=======================================================
+
+    users (A)              admin_users (B)
+    Alice, Bob,            Alice, Diana, Eve
+    Charlie, Diana
+
+    UNION          A + B, no duplicates
+    (A or B)   ->  Alice, Bob, Charlie, Diana, Eve
+
+    UNION ALL      A + B, with duplicates
+    (A + B)    ->  Alice, Bob, Charlie, Diana, Alice, Diana, Eve
+
+    INTERSECT      only what is in BOTH
+    (A and B)  ->  Alice, Diana
+
+    EXCEPT         only what is in A but NOT in B
+    (A not B)  ->  Bob, Charlie
+
+=======================================================
+SET OPERATIONS vs JOIN -- KEY DIFFERENCE
+=======================================================
+
+    JOIN           -- combines COLUMNS from multiple tables (horizontal)
+                      Result: more columns, rows matched on a condition.
+                      e.g., user.name + address.city in the same row.
+
+    SET OPERATION  -- combines ROWS from multiple queries (vertical)
+                      Result: more rows, same number of columns.
+                      e.g., users stacked on top of admin_users.
+
+    Use JOIN when: you need related data from two tables in one row.
+    Use SET OP when: you need to combine or compare similar data from
+                     two separate result sets.
+
+=======================================================
+MySQL VERSION SUPPORT SUMMARY
+=======================================================
+
+    Operation   | MySQL < 8.0.31        | MySQL 8.0.31+  | SQL Server
+    -------------------------------------------------------------------
+    UNION       | Yes                   | Yes            | Yes
+    UNION ALL   | Yes                   | Yes            | Yes
+    INTERSECT   | No (use JOIN or IN)   | Yes            | Yes
+    EXCEPT      | No (use LEFT JOIN     | Yes            | Yes
+                |  IS NULL or NOT IN)   |                |
+    MINUS       | No                    | No             | No (Oracle only)
+
+    Check your version: SELECT VERSION();
+
+=======================================================
+QUICK REFERENCE
+=======================================================
+
+Operation   | What it returns                        | Duplicates
+-------------------------------------------------------------------
+UNION       | All rows from both, combined            | Removed
+UNION ALL   | All rows from both, combined            | Kept
+INTERSECT   | Only rows in BOTH result sets           | Removed
+EXCEPT      | Rows in first but NOT in second         | Removed
+
+Workarounds for older MySQL (no INTERSECT / EXCEPT):
+
+    INTERSECT workaround:
+    SELECT col FROM table1
+    WHERE col IN (SELECT col FROM table2);
+
+    EXCEPT workaround:
+    SELECT col FROM table1
+    WHERE col NOT IN (SELECT col FROM table2);
+
+Common mistakes:
+    1. Different number of columns in each SELECT -> ERROR
+    2. Incompatible data types in same column position -> ERROR
+    3. Putting ORDER BY inside individual SELECT (not at the end) -> ERROR
+    4. Expecting EXCEPT to work in MySQL < 8.0.31 -> ERROR
+    5. Forgetting order matters for EXCEPT
+       (A EXCEPT B) is NOT the same as (B EXCEPT A)
+
+=======================================================
