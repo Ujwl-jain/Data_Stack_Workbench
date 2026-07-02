@@ -302,3 +302,173 @@ List tables           | SHOW TABLES              | SELECT * FROM INFORMATION_SCH
 Batch separator       | ; (semicolon)            | GO (in SSMS)
 
 =======================================================
+
+========================================================
+GROUP BY — HOW IT WORKS BEHIND THE SCENE
+========================================================
+
+
+THE GOLDEN RULE
+---------------
+SQL does NOT run top to bottom.
+This is the actual execution order:
+
+   1. FROM + JOIN   → bring tables together
+   2. WHERE         → filter individual rows
+   3. GROUP BY      → separate rows into buckets/piles
+   4. HAVING        → filter the buckets/piles
+   5. SELECT        → pick what to display
+   6. ORDER BY      → sort final result
+
+
+--------------------------------------------------------
+THE BUCKET SYSTEM — REAL EXAMPLE
+--------------------------------------------------------
+
+QUERY:
+   SELECT u.name, COUNT(*) AS login_count
+   FROM users u
+   INNER JOIN user_log ul ON u.id = ul.user_id
+   WHERE ul.name = 'Login'
+   GROUP BY u.name;
+
+
+YOUR TWO TABLES:
+
+   users                    user_log
+   ------                   --------
+   id   name                user_id   action
+   1    Ujjwal              1         Login
+   2    Raj                 1         Login
+   3    Meera               1         Logout
+                            2         Login
+                            2         Logout
+                            3         Login
+                            3         Login
+                            3         Login
+
+
+STEP 1 — FROM + JOIN
+Combine both tables where users.id = user_log.user_id:
+
+   u.name    ul.action
+   Ujjwal    Login
+   Ujjwal    Login
+   Ujjwal    Logout
+   Raj       Login
+   Raj       Logout
+   Meera     Login
+   Meera     Login
+   Meera     Login
+
+   All 8 rows present. Nothing removed yet.
+
+
+STEP 2 — WHERE ul.action = 'Login'
+Remove any row that is not Login:
+
+   u.name    ul.action
+   Ujjwal    Login      ✔ kept
+   Ujjwal    Login      ✔ kept
+   Ujjwal    Logout     ✘ removed
+   Raj       Login      ✔ kept
+   Raj       Logout     ✘ removed
+   Meera     Login      ✔ kept
+   Meera     Login      ✔ kept
+   Meera     Login      ✔ kept
+
+   Remaining rows:
+   Ujjwal / Raj / Meera Login rows only.
+
+
+STEP 3 — GROUP BY u.name
+Separate remaining rows into piles, one pile per unique name:
+
+   Ujjwal pile     Raj pile     Meera pile
+   -----------     --------     ----------
+   Login           Login        Login
+   Login                        Login
+                                Login
+
+
+STEP 4 — COUNT(*)
+Count how many rows are in each pile:
+
+   Ujjwal pile  →  2
+   Raj pile     →  1
+   Meera pile   →  3
+
+   IMPORTANT: COUNT does NOT know or care about months, names,
+   or any grouping logic. It just counts rows in whatever pile
+   GROUP BY created. GROUP BY makes the piles. COUNT counts them.
+
+
+STEP 5 — SELECT
+Show u.name and the count:
+
+   name      login_count
+   Ujjwal    2
+   Raj       1
+   Meera     3
+
+
+--------------------------------------------------------
+WHERE vs HAVING — THE KEY DIFFERENCE
+--------------------------------------------------------
+
+WHERE   →  filters ROWS before grouping (faster)
+HAVING  →  filters GROUPS/PILES after grouping
+
+Use WHERE when condition is on a raw column.
+Use HAVING when condition is on an aggregate (COUNT, AVG, SUM etc.)
+
+   -- Show states with more than 3 users
+   SELECT state, COUNT(*) AS total_users
+   FROM users u
+   INNER JOIN addresses a ON u.id = a.user_id
+   GROUP BY state
+   HAVING COUNT(*) > 3;
+
+   Behind the scene:
+   - GROUP BY separates rows into state piles
+   - COUNT(*) counts each pile
+   - HAVING then removes piles where count is 3 or less
+   - Only piles with more than 3 survive
+
+
+--------------------------------------------------------
+COUNT(*) vs COUNT(column) — IMPORTANT DIFFERENCE
+--------------------------------------------------------
+
+COUNT(*)         →  counts ALL rows including NULLs
+COUNT(a.user_id) →  skips NULLs
+
+When to use COUNT(column):
+   When you want users with ZERO matches to show as 0, not 1.
+
+   Example — count addresses per user including users with no address:
+
+   SELECT u.name, COUNT(a.user_id) AS address_count
+   FROM users u
+   LEFT JOIN addresses a ON u.id = a.user_id
+   GROUP BY u.name;
+
+   After LEFT JOIN, users with no address get NULL in address columns.
+   COUNT(*)         counts that NULL row → gives 1 (WRONG)
+   COUNT(a.user_id) skips that NULL      → gives 0 (CORRECT)
+
+
+--------------------------------------------------------
+QUICK MENTAL CHECKLIST FOR EVERY GROUP BY QUERY
+--------------------------------------------------------
+
+1. What tables do I need?              → FROM + JOIN
+2. Do I need to remove any rows?       → WHERE
+3. What do I want to group by?         → GROUP BY
+4. What do I want to count/sum/avg?    → COUNT / SUM / AVG
+5. Do I need to filter the groups?     → HAVING
+6. What columns do I want to see?      → SELECT
+
+========================================================
+END OF NOTES
+========================================================
