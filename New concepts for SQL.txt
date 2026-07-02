@@ -1,5 +1,40 @@
 HERE LIES THE CONCEPT THAT WE HAVE NOT LEARN IN OUR TUTORIAL OR THAT WE WILL DISCOVER IN FUTURE
 
+ANY / ALL — Notes
+------------------
+
+ANY:
+- salary > ANY (subquery)  → true if value beats AT LEAST ONE row in subquery
+- Equivalent to: salary > MIN(subquery)
+- salary < ANY (subquery)  → true if value is less than AT LEAST ONE row
+  Equivalent to: salary < MAX(subquery)
+
+ALL:
+- salary > ALL (subquery)  → true if value beats EVERY row in subquery
+- Equivalent to: salary > MAX(subquery)
+- salary < ALL (subquery)  → true if value is less than EVERY row
+  Equivalent to: salary < MIN(subquery)
+
+Quick way to remember:
+- ANY  = easier to satisfy  = compare against the weakest competitor (MIN for >, MAX for <)
+- ALL  = harder to satisfy  = compare against the strongest competitor (MAX for >, MIN for <)
+
+NULL warning:
+- If subquery has NULL values:
+  - MIN()/MAX() ignore NULLs automatically, so MIN/MAX versions still work fine.
+  - ANY/ALL with a NULL in the set can return UNKNOWN for some comparisons,
+    silently dropping rows you expected. Prefer MIN/MAX in production code,
+    use ANY/ALL when the question specifically tests the keyword.
+
+Also valid:
+- = ANY (subquery)  → same as IN (subquery)
+- <> ALL (subquery) → same as NOT IN (subquery)
+
+Syntax rule:
+- ANY / ALL must come right after the comparison operator, not inside SELECT.
+  Correct:   salary > ALL (SELECT salary FROM ...)
+  Wrong:     SELECT ALL(salary) FROM ...
+
 ----------------------------
 LAST_INSERT_ID()  -- MySQL
 SCOPE_IDENTITY()  -- SQL Server / SSMS
