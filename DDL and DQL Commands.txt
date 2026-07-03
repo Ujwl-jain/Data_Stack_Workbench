@@ -185,7 +185,7 @@ RENAME         | Renames a table
     ALTER TABLE users RENAME COLUMN name TO full_name;
 
     -- Add a constraint to an existing column:
-    ALTER TABLE users ADD CONSTRAINT UNIQUE (email);
+    ALTER TABLE users ADD CONSTRAINT uq_users_email UNIQUE (email);
 
     Use ALTER when the table already exists and you need to update its structure
     without deleting and recreating it.
