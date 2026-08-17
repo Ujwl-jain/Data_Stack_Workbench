@@ -1,0 +1,148 @@
+DATA FACTORY - BASICS
+========================================
+
+WHAT IT IS
+----------------------------------------
+It is an ETL tool. It takes care of all the code behind the scenes -
+it is low-code/no-code, and lets you build ETL pipelines to migrate
+data from one place to another.
+
+(ETL = Extract, Transform, Load - pulling data from a source, changing/
+cleaning it, then loading it into a destination.)
+
+
+RESOURCE: AZURE DATA FACTORY
+----------------------------------------
+Things for the setup:
+1. Name of the instance (must be globally unique across Azure)
+2. Region (where the Data Factory's metadata is stored - the actual
+   data stores/compute it connects to can be in other regions)
+3. Version
+
+Correction/clarification on Version: in practice there is only one
+active version today - V2. V1 is the original/legacy version and is
+considered outdated - Microsoft's own tooling now defaults to V2, so
+this field is rarely something you'd actually need to change.
+
+Directly do the Review + Create, and it will be done.
+
+
+OVERVIEW OF DATA FACTORY
+----------------------------------------
+Click "Launch Studio" - this takes you to the Data Factory Studio
+platform (the actual working environment, separate from the Azure
+Portal resource page).
+
+
+TAB 1: AUTHOR
+----------------------------------------
+Used to build pipelines, process the data, transform the data -
+basically manipulate the data.
+
+-> Pipelines
+   A pipeline is a group of activities/steps chained together (e.g.
+   "copy data from source", "transform it", "load into destination")
+   that run as one coordinated workflow.
+
+-> Change data capture (CDC)
+   A feature that automatically detects and captures only the NEW or
+   CHANGED rows in a source since the last run, instead of
+   re-processing the entire dataset every time - more efficient for
+   ongoing/incremental data movement.
+
+-> Datasets
+   Represents the actual data structure/location you're reading from
+   or writing to (e.g. a specific table, file, or blob container) -
+   essentially points to "what data" a pipeline activity should use.
+
+-> Data flows
+   A visual, drag-and-drop way to build data transformation logic
+   (joins, filters, aggregations, etc.) without writing code - runs on
+   Spark behind the scenes.
+
+-> Power query
+   Lets you use the same Power Query (Excel/Power BI-style)
+   spreadsheet-like interface to explore and transform data visually,
+   generating a data flow from it automatically.
+
+
+TAB 2: MONITOR
+----------------------------------------
+Used to monitor pipelines - whether they're failing or not.
+
+-> Pipeline runs
+   Shows the history and status (success/failure/in-progress) of every
+   time a pipeline has actually executed.
+
+-> Trigger runs
+   Shows history of when triggers fired (the scheduling/event
+   mechanism that started a pipeline run).
+
+-> Change data capture (monitoring view)
+   Lets you monitor the status/health of your CDC processes
+   specifically.
+
+
+TAB 3: MANAGE
+----------------------------------------
+To manage all the things within the Data Factory - the main thing here
+is Linked Services.
+
+-> Linked Services
+   What we call a "connection" in Data Factory - essentially the
+   connection string/credentials that let Data Factory talk to an
+   external resource (e.g. a SQL Database, a Storage Account, an API).
+
+-> Integration runtime
+   The actual compute infrastructure that executes your pipeline
+   activities/data movement - e.g. the Azure-hosted default runtime,
+   or a Self-hosted Integration Runtime if you need to connect to
+   on-premises data behind a firewall.
+
+-> Microsoft Purview
+   Lets you connect Data Factory to a Microsoft Purview account for
+   data governance - data lineage tracking, cataloging, and
+   discovery across your data estate.
+
+-> Git configuration
+   Connects the Data Factory to a Git repo (Azure DevOps/GitHub) for
+   version control of your pipelines, enabling collaboration and
+   CI/CD instead of only saving directly to the live Data Factory.
+
+-> ARM Templates
+   The code behind the pipelines (Azure Resource Manager JSON
+   templates) - can be imported/exported, used to deploy your
+   pipelines consistently across different environments (e.g. Dev ->
+   Test -> Production), not just "different timelines".
+
+-> Triggers
+   Used to trigger a pipeline - i.e. used to schedule a pipeline (on a
+   time schedule, on a specific event like a file arriving, or
+   manually).
+
+-> Global parameters
+   Values/parameters defined once at the Data Factory level that can
+   be reused across multiple pipelines, instead of hardcoding the same
+   value repeatedly.
+
+-> Data flow libraries (Data flow debug settings)
+   Settings related to configuring and debugging Data Flows (e.g.
+   spinning up a temporary Spark cluster for testing your data flow
+   logic interactively before publishing).
+
+-> Apache Airflow
+   Lets you integrate/manage Apache Airflow environments directly
+   within Data Factory, so you can orchestrate Airflow DAGs alongside
+   your native ADF pipelines.
+
+
+TAB 4: LEARNING CENTER
+----------------------------------------
+Explore to learn from tutorial videos - built-in guided learning
+resources within the Studio itself.
+
+
+NOTE
+----------------------------------------
+Data Factory is a vast and deep topic - this is just the layout/
+overview of Data Factory.
