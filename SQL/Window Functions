@@ -1,0 +1,522 @@
+=======================================================
+SQL NOTES: WINDOW FUNCTIONS
+=======================================================
+
+A window function performs a calculation across a set of rows that are
+related to the current row -- without collapsing those rows into one
+like aggregate functions do.
+
+The key difference from GROUP BY aggregates:
+
+    GROUP BY + aggregate:
+    SELECT gender, AVG(salary) FROM users GROUP BY gender;
+    -- Returns ONE row per gender. Individual rows are gone.
+
+    Window function:
+    SELECT name, gender, salary, AVG(salary) OVER(PARTITION BY gender)
+    FROM users;
+    -- Returns ALL rows. Each row also shows the avg for its gender group.
+    -- Individual rows are preserved. The aggregate is attached alongside.
+
+Think of it like this:
+    Aggregate + GROUP BY  -- summarizes, collapses rows
+    Window function       -- calculates alongside, keeps all rows
+
+=======================================================
+CORE SYNTAX
+=======================================================
+
+    function_name() OVER (
+        PARTITION BY column    -- optional: divide rows into groups
+        ORDER BY column        -- optional: define row order within group
+        ROWS/RANGE BETWEEN ... -- optional: frame clause (covered later)
+    )
+
+    OVER()        -- this is what makes it a window function.
+                     Without OVER(), COUNT() is a regular aggregate.
+                     With OVER(), COUNT() becomes a window function.
+
+    PARTITION BY  -- divides rows into groups (like GROUP BY but rows kept)
+                     if omitted, the entire table is one partition
+
+    ORDER BY      -- defines the order of rows within each partition
+                     required for ranking and running total functions
+
+-------------------------------------------------------
+Reference table used throughout these notes
+-------------------------------------------------------
+
+    users table:
+    id | name    | gender | city    | salary | dept
+    1  | Alice   | Female | Mumbai  | 75000  | HR
+    2  | Bob     | Male   | Pune    | 50000  | IT
+    3  | Charlie | Male   | Mumbai  | 60000  | IT
+    4  | Diana   | Female | Delhi   | 80000  | HR
+    5  | Eve     | Female | Mumbai  | 70000  | Finance
+    6  | Frank   | Male   | Delhi   | 90000  | Finance
+    7  | Grace   | Female | Pune    | 55000  | IT
+    8  | Henry   | Male   | Mumbai  | 60000  | HR
+
+=======================================================
+SECTION 1: RANKING FUNCTIONS
+=======================================================
+
+-------------------------------------------------------
+1. ROW_NUMBER() -- unique sequential number per row
+-------------------------------------------------------
+
+    SELECT name, salary,
+           ROW_NUMBER() OVER (ORDER BY salary DESC) AS row_num
+    FROM users;
+
+    Result:
+        name    | salary | row_num
+        Frank   | 90000  | 1
+        Diana   | 80000  | 2
+        Alice   | 75000  | 3
+        Eve     | 70000  | 4
+        Charlie | 60000  | 5
+        Henry   | 60000  | 6       <- same salary as Charlie, still different number
+        Grace   | 55000  | 7
+        Bob     | 50000  | 8
+
+    ROW_NUMBER() always gives a UNIQUE number to every row.
+    Even if two rows have the same salary, they get different numbers.
+    The tie-breaking order is not guaranteed -- it is arbitrary for ties.
+
+    Use when: you need a unique sequential number regardless of ties.
+              e.g., pagination (give me rows 11-20).
+
+-------------------------------------------------------
+2. RANK() -- rank with gaps for ties
+-------------------------------------------------------
+
+    SELECT name, salary,
+           RANK() OVER (ORDER BY salary DESC) AS rnk
+    FROM users;
+
+    Result:
+        name    | salary | rnk
+        Frank   | 90000  | 1
+        Diana   | 80000  | 2
+        Alice   | 75000  | 3
+        Eve     | 70000  | 4
+        Charlie | 60000  | 5       <- tied at rank 5
+        Henry   | 60000  | 5       <- tied at rank 5
+        Grace   | 55000  | 7       <- gap: rank 6 is skipped
+        Bob     | 50000  | 8
+
+    RANK() gives the same rank to tied rows.
+    It then SKIPS the next rank(s) to account for the tie.
+    Charlie and Henry both get rank 5, next rank jumps to 7 (not 6).
+
+    Use when: standard competition ranking.
+              e.g., two students with the same score both get 2nd place,
+              next student gets 4th place (like Olympic medals).
+
+-------------------------------------------------------
+3. DENSE_RANK() -- rank without gaps for ties
+-------------------------------------------------------
+
+    SELECT name, salary,
+           DENSE_RANK() OVER (ORDER BY salary DESC) AS dense_rnk
+    FROM users;
+
+    Result:
+        name    | salary | dense_rnk
+        Frank   | 90000  | 1
+        Diana   | 80000  | 2
+        Alice   | 75000  | 3
+        Eve     | 70000  | 4
+        Charlie | 60000  | 5       <- tied at rank 5
+        Henry   | 60000  | 5       <- tied at rank 5
+        Grace   | 55000  | 6       <- NO gap: continues at 6
+        Bob     | 50000  | 7
+
+    DENSE_RANK() gives the same rank to tied rows.
+    It does NOT skip ranks after a tie.
+    Charlie and Henry both get rank 5, next rank is 6 (not 7).
+
+    Use when: you want ranks without gaps.
+              e.g., salary bands, product tiers.
+
+-------------------------------------------------------
+ROW_NUMBER vs RANK vs DENSE_RANK -- side by side
+-------------------------------------------------------
+
+    salary | ROW_NUMBER | RANK | DENSE_RANK
+    ------------------------------------------
+    90000  |     1      |   1  |     1
+    80000  |     2      |   2  |     2
+    75000  |     3      |   3  |     3
+    70000  |     4      |   4  |     4
+    60000  |     5      |   5  |     5
+    60000  |     6      |   5  |     5    <- tie handled differently
+    55000  |     7      |   7  |     6    <- gap vs no gap
+    50000  |     8      |   8  |     7
+
+    ROW_NUMBER -- always unique, no ties
+    RANK       -- ties get same rank, gaps after tie
+    DENSE_RANK -- ties get same rank, NO gaps after tie
+
+-------------------------------------------------------
+4. NTILE(n) -- divide rows into n equal buckets
+-------------------------------------------------------
+
+    SELECT name, salary,
+           NTILE(4) OVER (ORDER BY salary DESC) AS quartile
+    FROM users;
+
+    Result:
+        name    | salary | quartile
+        Frank   | 90000  | 1           <- top 25%
+        Diana   | 80000  | 1
+        Alice   | 75000  | 2
+        Eve     | 70000  | 2
+        Charlie | 60000  | 3
+        Henry   | 60000  | 3
+        Grace   | 55000  | 4
+        Bob     | 50000  | 4           <- bottom 25%
+
+    NTILE(4) divides rows into 4 equal groups (quartiles).
+    NTILE(10) would create deciles (10 groups).
+    NTILE(100) would create percentiles (100 groups).
+
+    If rows don't divide evenly, earlier buckets get one extra row.
+
+    Use when: you need to segment users into performance tiers,
+              salary bands, percentile groups.
+
+-------------------------------------------------------
+Ranking with PARTITION BY -- rank WITHIN each group
+-------------------------------------------------------
+
+    SELECT name, dept, salary,
+           RANK() OVER (PARTITION BY dept ORDER BY salary DESC) AS dept_rank
+    FROM users;
+
+    Result:
+        name    | dept    | salary | dept_rank
+        Diana   | HR      | 80000  | 1          <- rank within HR only
+        Alice   | HR      | 75000  | 2
+        Henry   | HR      | 60000  | 3
+        Frank   | Finance | 90000  | 1          <- rank resets for Finance
+        Eve     | Finance | 70000  | 2
+        Charlie | IT      | 60000  | 1          <- rank resets for IT
+        Bob     | IT      | 50000  | 2
+        Grace   | IT      | 55000  | 3
+
+    PARTITION BY dept restarts the ranking for each department.
+    Without PARTITION BY, ranking is across the entire table.
+
+    Very common interview question:
+    "Find the highest paid employee in each department."
+
+    SELECT * FROM (
+        SELECT name, dept, salary,
+               RANK() OVER (PARTITION BY dept ORDER BY salary DESC) AS rnk
+        FROM users
+    ) ranked
+    WHERE rnk = 1;
+
+    Result:
+        name  | dept    | salary
+        Diana | HR      | 80000
+        Frank | Finance | 90000
+        Charlie| IT     | 60000
+
+=======================================================
+SECTION 2: VALUE FUNCTIONS
+=======================================================
+
+-------------------------------------------------------
+5. LAG() -- access value from a PREVIOUS row
+-------------------------------------------------------
+
+    SELECT name, salary,
+           LAG(salary) OVER (ORDER BY salary) AS prev_salary
+    FROM users;
+
+    Result:
+        name    | salary | prev_salary
+        Bob     | 50000  | NULL        <- no previous row
+        Grace   | 55000  | 50000
+        Charlie | 60000  | 55000
+        Henry   | 60000  | 60000
+        Eve     | 70000  | 60000
+        Alice   | 75000  | 70000
+        Diana   | 80000  | 75000
+        Frank   | 90000  | 80000
+
+    LAG(salary) returns the salary of the previous row in the defined order.
+    First row has no previous row, so it returns NULL.
+
+    Practical use -- show salary difference from previous row:
+    SELECT name, salary,
+           LAG(salary) OVER (ORDER BY salary) AS prev_salary,
+           salary - LAG(salary) OVER (ORDER BY salary) AS salary_jump
+    FROM users;
+
+    LAG with offset and default:
+    LAG(salary, 2, 0)
+    -- 2: look 2 rows back (default is 1)
+    -- 0: return 0 instead of NULL when there is no previous row
+
+-------------------------------------------------------
+6. LEAD() -- access value from a NEXT row
+-------------------------------------------------------
+
+    SELECT name, salary,
+           LEAD(salary) OVER (ORDER BY salary) AS next_salary
+    FROM users;
+
+    Result:
+        name    | salary | next_salary
+        Bob     | 50000  | 55000
+        Grace   | 55000  | 60000
+        Charlie | 60000  | 60000
+        Henry   | 60000  | 70000
+        Eve     | 70000  | 75000
+        Alice   | 75000  | 80000
+        Diana   | 80000  | 90000
+        Frank   | 90000  | NULL        <- no next row
+
+    LEAD(salary) returns the salary of the next row in the defined order.
+    Last row has no next row, so it returns NULL.
+
+    LAG vs LEAD:
+        LAG()  -- looks BACKWARD (previous row)
+        LEAD() -- looks FORWARD (next row)
+
+    Practical use: compare each month's sales to next month's.
+    Compare each employee's salary to the next higher salary.
+
+-------------------------------------------------------
+7. FIRST_VALUE() -- first value in the window partition
+-------------------------------------------------------
+
+    SELECT name, dept, salary,
+           FIRST_VALUE(salary) OVER (
+               PARTITION BY dept ORDER BY salary DESC
+           ) AS highest_in_dept
+    FROM users;
+
+    Result:
+        name    | dept    | salary | highest_in_dept
+        Diana   | HR      | 80000  | 80000
+        Alice   | HR      | 75000  | 80000       <- always shows HR's highest
+        Henry   | HR      | 60000  | 80000
+        Frank   | Finance | 90000  | 90000
+        Eve     | Finance | 70000  | 90000       <- always shows Finance's highest
+        Charlie | IT      | 60000  | 60000
+        Bob     | IT      | 50000  | 60000
+        Grace   | IT      | 55000  | 60000
+
+    FIRST_VALUE returns the first value in the ordered partition.
+    With ORDER BY salary DESC, first value = highest salary in that dept.
+    Every row in the partition sees the same first value.
+
+-------------------------------------------------------
+8. LAST_VALUE() -- last value in the window partition
+-------------------------------------------------------
+
+    SELECT name, dept, salary,
+           LAST_VALUE(salary) OVER (
+               PARTITION BY dept
+               ORDER BY salary DESC
+               ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+           ) AS lowest_in_dept
+    FROM users;
+
+    IMPORTANT: LAST_VALUE requires an explicit frame clause.
+    Without it, the default frame only goes up to the current row,
+    so LAST_VALUE would just return the current row's value (useless).
+
+    ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+    -- tells MySQL: consider ALL rows in the partition, not just up to current row.
+
+    Use FIRST_VALUE over LAST_VALUE when possible -- it is simpler.
+    For the minimum value, use FIRST_VALUE with ORDER BY salary ASC instead.
+
+=======================================================
+SECTION 3: AGGREGATE WINDOW FUNCTIONS
+=======================================================
+
+Regular aggregate functions (SUM, AVG, COUNT, MIN, MAX) can ALL be
+used as window functions by adding OVER().
+
+-------------------------------------------------------
+9. Running total with SUM() OVER()
+-------------------------------------------------------
+
+    SELECT name, salary,
+           SUM(salary) OVER (ORDER BY id) AS running_total
+    FROM users;
+
+    Result:
+        name    | salary | running_total
+        Alice   | 75000  | 75000
+        Bob     | 50000  | 125000
+        Charlie | 60000  | 185000
+        Diana   | 80000  | 265000
+        Eve     | 70000  | 335000
+        Frank   | 90000  | 425000
+        Grace   | 55000  | 480000
+        Henry   | 60000  | 540000
+
+    SUM() OVER (ORDER BY id) accumulates as it goes row by row.
+    This is a running total -- very common in financial reports.
+
+    Running total per department:
+    SELECT name, dept, salary,
+           SUM(salary) OVER (PARTITION BY dept ORDER BY id) AS dept_running_total
+    FROM users;
+    -- Running total restarts for each department.
+
+-------------------------------------------------------
+10. AVG() OVER() -- average alongside each row
+-------------------------------------------------------
+
+    SELECT name, salary,
+           AVG(salary) OVER () AS company_avg,
+           salary - AVG(salary) OVER () AS diff_from_avg
+    FROM users;
+
+    OVER() with nothing inside means: entire table is one window.
+    Every row sees the same company_avg value.
+    diff_from_avg shows how much each person is above or below average.
+
+    With PARTITION BY:
+    SELECT name, dept, salary,
+           AVG(salary) OVER (PARTITION BY dept) AS dept_avg
+    FROM users;
+    -- Each row shows the average for its own department.
+
+-------------------------------------------------------
+11. COUNT() OVER() -- count alongside each row
+-------------------------------------------------------
+
+    SELECT name, dept,
+           COUNT(*) OVER (PARTITION BY dept) AS dept_headcount
+    FROM users;
+
+    Result:
+        name    | dept    | dept_headcount
+        Diana   | HR      | 3
+        Alice   | HR      | 3
+        Henry   | HR      | 3              <- all HR rows see 3
+        Frank   | Finance | 2
+        Eve     | Finance | 2
+        Charlie | IT      | 3
+        Bob     | IT      | 3
+        Grace   | IT      | 3
+
+    Every row knows how many people are in its department.
+    Without window functions this would require a subquery or JOIN.
+
+=======================================================
+SECTION 4: FRAME CLAUSE
+=======================================================
+
+The frame clause defines WHICH rows within the partition are included
+in the calculation for each row. It refines the window further.
+
+    ROWS BETWEEN start AND end
+
+    start / end options:
+        UNBOUNDED PRECEDING  -- from the very first row of the partition
+        N PRECEDING          -- N rows before current row
+        CURRENT ROW          -- the current row itself
+        N FOLLOWING          -- N rows after current row
+        UNBOUNDED FOLLOWING  -- until the very last row of the partition
+
+-------------------------------------------------------
+Default frame when ORDER BY is used
+-------------------------------------------------------
+
+    RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+
+    This means: from the first row of the partition up to the current row.
+    This is why running totals work naturally with ORDER BY.
+    This is also why LAST_VALUE needs an explicit frame -- its default
+    frame stops at the current row, not the end of the partition.
+
+-------------------------------------------------------
+Moving average example (last 3 rows including current)
+-------------------------------------------------------
+
+    SELECT name, salary,
+           AVG(salary) OVER (
+               ORDER BY id
+               ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+           ) AS moving_avg_3
+    FROM users;
+
+    For each row, averages the current row and the 2 rows before it.
+    First two rows average fewer rows (only what is available).
+    Useful in financial data to smooth out spikes.
+
+=======================================================
+WINDOW FUNCTIONS vs GROUP BY -- WHEN TO USE WHICH
+=======================================================
+
+    Use GROUP BY when:
+        You want a summarized result with one row per group.
+        You do not need the individual rows anymore.
+        e.g., total salary by department.
+
+    Use Window Functions when:
+        You want the individual rows AND a calculated value alongside.
+        You need rankings, running totals, or row comparisons.
+        e.g., each employee's salary AND their department's total salary.
+
+    -- GROUP BY (loses individual rows):
+    SELECT dept, SUM(salary) AS total
+    FROM users
+    GROUP BY dept;
+    -- 3 rows returned (one per dept). Names are gone.
+
+    -- Window function (keeps individual rows):
+    SELECT name, dept, salary,
+           SUM(salary) OVER (PARTITION BY dept) AS dept_total
+    FROM users;
+    -- 8 rows returned. Each row has name, salary, AND dept total.
+
+=======================================================
+QUICK REFERENCE
+=======================================================
+
+Function                        | Purpose
+------------------------------------------------------------------------
+ROW_NUMBER() OVER(ORDER BY ...) | Unique sequential number, no ties
+RANK() OVER(ORDER BY ...)       | Rank with gaps after ties
+DENSE_RANK() OVER(ORDER BY ...) | Rank without gaps after ties
+NTILE(n) OVER(ORDER BY ...)     | Divide rows into n equal buckets
+LAG(col, n, default)            | Value from n rows BEFORE current
+LEAD(col, n, default)           | Value from n rows AFTER current
+FIRST_VALUE(col) OVER(...)      | First value in partition window
+LAST_VALUE(col) OVER(...)       | Last value (needs full frame clause)
+SUM(col) OVER(ORDER BY ...)     | Running total
+AVG(col) OVER(PARTITION BY ...) | Group average alongside each row
+COUNT(*) OVER(PARTITION BY ...) | Group count alongside each row
+
+Clause          | Purpose
+------------------------------------------------------
+OVER()          | Marks a function as a window function
+PARTITION BY    | Divides rows into groups (like GROUP BY but rows kept)
+ORDER BY        | Defines row order within each partition
+ROWS BETWEEN    | Defines which rows are included in the frame
+
+Common interview questions using window functions:
+    1. Find the highest paid employee in each department
+       -> RANK() OVER(PARTITION BY dept ORDER BY salary DESC), filter WHERE rnk = 1
+    2. Find the second highest salary overall
+       -> DENSE_RANK() OVER(ORDER BY salary DESC), filter WHERE dense_rnk = 2
+    3. Show running total of salary
+       -> SUM(salary) OVER(ORDER BY id)
+    4. Compare each employee salary to department average
+       -> salary - AVG(salary) OVER(PARTITION BY dept)
+    5. Find difference between current and previous row
+       -> salary - LAG(salary) OVER(ORDER BY salary)
+
+=======================================================

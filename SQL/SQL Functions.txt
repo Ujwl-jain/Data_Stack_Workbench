@@ -1,0 +1,401 @@
+=======================================================
+SQL NOTES: FUNCTIONS
+=======================================================
+
+Functions help you analyse, transform, or summarize data in your tables.
+Instead of fetching raw data and processing it in your application,
+you let the database do the work -- faster and cleaner.
+
+Functions are broadly split into two types:
+
+Type                | Works on          | Example
+---------------------------------------------------
+Aggregate Functions | Entire column     | COUNT, SUM, AVG, MIN, MAX
+Scalar Functions    | One row at a time | LENGTH, LOWER, ROUND, CONCAT
+
+=======================================================
+AGGREGATE FUNCTIONS
+=======================================================
+
+Aggregate functions collapse multiple rows into a single result.
+They summarize an entire column (or filtered subset) into one value.
+
+-------------------------------------------------------
+1. COUNT -- count number of rows
+-------------------------------------------------------
+
+    -- Count ALL rows in the table:
+    SELECT COUNT(*) FROM users;
+
+    -- Count rows matching a condition:
+    SELECT COUNT(*) FROM users WHERE gender = 'Male';
+
+    -- Count non-NULL values in a specific column:
+    SELECT COUNT(salary) FROM users;
+
+    COUNT(*) vs COUNT(column):
+        COUNT(*)       -- counts every row including NULLs
+        COUNT(salary)  -- counts only rows where salary is NOT NULL
+        Use COUNT(*) to count total rows.
+        Use COUNT(column) when you want to know how many rows actually have a value.
+
+    With alias:
+    SELECT COUNT(*) AS total_users FROM users;
+    SELECT COUNT(*) AS male_users FROM users WHERE gender = 'Male';
+
+-------------------------------------------------------
+2. MIN and MAX -- smallest and largest value
+-------------------------------------------------------
+
+    SELECT MIN(salary) AS min_salary, MAX(salary) AS max_salary FROM users;
+
+    MIN -- returns the lowest value in the column
+    MAX -- returns the highest value in the column
+
+    AS is used to give the result column a readable name.
+    Without AS, the output column header would literally show MIN(salary).
+
+    Works on numbers, dates, and text (alphabetical for text):
+    SELECT MIN(dob) AS oldest, MAX(dob) AS youngest FROM users;
+    SELECT MIN(name) AS first_alphabetically FROM users;
+
+    With WHERE:
+    SELECT MAX(salary) AS highest_female_salary
+    FROM users
+    WHERE gender = 'Female';
+
+-------------------------------------------------------
+3. SUM -- total of a column
+-------------------------------------------------------
+
+    SELECT SUM(salary) AS total_salary FROM users;
+
+    Adds up all values in the column.
+    NULL values are ignored automatically.
+
+    With WHERE:
+    SELECT SUM(salary) AS total_male_salary FROM users WHERE gender = 'Male';
+
+    Practical use: total payroll, total revenue, total order value.
+
+-------------------------------------------------------
+4. AVG -- average of a column
+-------------------------------------------------------
+
+    SELECT AVG(salary) AS average_salary FROM users;
+
+    Calculates the mean: SUM divided by COUNT (NULLs excluded from both).
+
+    With GROUP BY (average per category):
+    SELECT gender, AVG(salary) AS average_salary
+    FROM users
+    GROUP BY gender;
+
+    GROUP BY groups the rows by the specified column first,
+    then AVG is calculated separately for each group.
+    Result will have one row per gender.
+
+    With ROUND to clean up decimals:
+    SELECT gender, ROUND(AVG(salary), 2) AS average_salary
+    FROM users
+    GROUP BY gender;
+
+-------------------------------------------------------
+GROUP BY -- used with aggregate functions
+-------------------------------------------------------
+
+    GROUP BY is not a function but it is essential with aggregates.
+    It splits rows into groups before the aggregate is applied.
+
+    SELECT gender, COUNT(*) AS total, AVG(salary) AS avg_salary
+    FROM users
+    GROUP BY gender;
+
+    Result:
+        gender  | total | avg_salary
+        Male    | 120   | 55000.00
+        Female  | 95    | 58000.00
+        Others  | 10    | 52000.00
+
+    Rule: Any column in SELECT that is NOT inside an aggregate function
+          must appear in GROUP BY.
+
+    With HAVING (filter groups after aggregation):
+    SELECT gender, AVG(salary) AS avg_salary
+    FROM users
+    GROUP BY gender
+    HAVING AVG(salary) > 50000;
+
+    WHERE vs HAVING:
+        WHERE   -- filters individual rows BEFORE grouping
+        HAVING  -- filters groups AFTER aggregation
+        e.g., WHERE salary > 30000 first, then GROUP BY, then HAVING AVG > 50000.
+
+=======================================================
+SCALAR FUNCTIONS
+=======================================================
+
+Scalar functions operate on one row at a time.
+They transform or calculate a value for each row individually.
+
+=======================================================
+STRING FUNCTIONS
+=======================================================
+
+-------------------------------------------------------
+5. LENGTH -- number of characters in a string
+-------------------------------------------------------
+
+    SELECT name, LENGTH(name) AS name_length FROM users;
+
+    NOTE: Correct spelling is LENGTH, not LENGHT (common typo).
+
+    Returns the number of characters in the string.
+    Useful for validation -- e.g., finding names that are too short or too long.
+
+    Combined example:
+    SELECT name, LOWER(name) AS lower_name, LENGTH(name) AS name_length
+    FROM users;
+
+    Find users with suspiciously short names:
+    SELECT name FROM users WHERE LENGTH(name) < 3;
+
+-------------------------------------------------------
+6. LOWER and UPPER -- change text case
+-------------------------------------------------------
+
+    SELECT LOWER(name) AS lower_name FROM users;
+    SELECT UPPER(name) AS upper_name FROM users;
+
+    LOWER -- converts all characters to lowercase   e.g., 'ALICE' -> 'alice'
+    UPPER -- converts all characters to uppercase   e.g., 'alice' -> 'ALICE'
+
+    The actual data in the table is NOT changed. Only the output is affected.
+
+    Practical use: standardizing data for comparison.
+    SELECT * FROM users WHERE LOWER(email) = 'alice@gmail.com';
+    -- This catches 'Alice@Gmail.com', 'ALICE@GMAIL.COM' etc.
+
+-------------------------------------------------------
+7. CONCAT -- join strings together
+-------------------------------------------------------
+
+    SELECT CONCAT(name, ' - ', email) AS user_info FROM users;
+
+    Joins multiple strings into one.
+    You can mix column names and plain text strings.
+
+    Examples:
+    SELECT CONCAT('Hello, ', name, '!') AS greeting FROM users;
+    -- Output: Hello, Alice!
+
+    SELECT CONCAT(name, ' (', gender, ')') AS display FROM users;
+    -- Output: Alice (Female)
+
+    Tip: CONCAT_WS (concat with separator) is cleaner when joining many columns:
+    SELECT CONCAT_WS(', ', name, email, gender) AS summary FROM users;
+    -- Output: Alice, alice@gmail.com, Female
+    -- First argument is the separator, applied between all the rest automatically.
+
+=======================================================
+NUMERIC FUNCTIONS
+=======================================================
+
+-------------------------------------------------------
+8. ROUND -- round to N decimal places
+-------------------------------------------------------
+
+    SELECT ROUND(AVG(salary), 2) AS avg_salary FROM users;
+    SELECT ROUND(3.14159, 2);    -- result: 3.14
+    SELECT ROUND(3.145, 2);      -- result: 3.15
+
+    First argument  : the number to round
+    Second argument : how many decimal places to keep
+
+    ROUND(value, 0) rounds to the nearest whole number.
+    ROUND(value)    same as ROUND(value, 0).
+
+-------------------------------------------------------
+9. FLOOR -- round DOWN to nearest whole number
+-------------------------------------------------------
+
+    SELECT FLOOR(4.9);    -- result: 4
+    SELECT FLOOR(4.1);    -- result: 4
+    SELECT FLOOR(-4.1);   -- result: -5
+
+    Always rounds toward negative infinity (strictly down).
+    Useful for calculating which page a row falls on, bucketing values, etc.
+
+    Example:
+    SELECT name, salary, FLOOR(salary / 1000) AS salary_band FROM users;
+    -- salary 55400 -> salary_band 55 (i.e., the 55k band)
+
+-------------------------------------------------------
+10. CEIL -- round UP to nearest whole number
+-------------------------------------------------------
+
+    SELECT CEIL(4.1);    -- result: 5
+    SELECT CEIL(4.9);    -- result: 5
+    SELECT CEIL(-4.9);   -- result: -4
+
+    NOTE: Correct spelling is CEIL, not CIEL (common typo).
+          CEILING is also accepted: SELECT CEILING(4.1);
+
+    Always rounds toward positive infinity (strictly up).
+    Useful for calculating total pages needed, minimum containers, etc.
+
+    Example:
+    SELECT CEIL(COUNT(*) / 10.0) AS total_pages FROM users;
+    -- If 95 users, you need CEIL(9.5) = 10 pages at 10 per page.
+
+-------------------------------------------------------
+FLOOR vs ROUND vs CEIL quick comparison
+-------------------------------------------------------
+
+    Value  | FLOOR | ROUND | CEIL
+    --------------------------------
+    4.1    |   4   |   4   |   5
+    4.5    |   4   |   5   |   5
+    4.9    |   4   |   5   |   5
+    -4.1   |  -5   |  -4   |  -4
+    -4.9   |  -5   |  -5   |  -4
+
+-------------------------------------------------------
+11. MOD -- remainder after division
+-------------------------------------------------------
+
+    SELECT MOD(10, 3);    -- result: 1   (10 divided by 3 = 3 remainder 1)
+    SELECT MOD(12, 4);    -- result: 0   (12 divided by 4 = 3 remainder 0)
+
+    Same as the % operator:
+    SELECT 10 % 3;        -- result: 1
+
+    Practical use:
+    -- Find all even IDs:
+    SELECT * FROM users WHERE MOD(id, 2) = 0;
+
+    -- Find all odd IDs:
+    SELECT * FROM users WHERE MOD(id, 2) = 1;
+
+    -- Group users into 3 batches by ID:
+    SELECT id, name, MOD(id, 3) AS batch FROM users;
+
+=======================================================
+DATE FUNCTIONS
+=======================================================
+
+-------------------------------------------------------
+12. DATEDIFF -- number of days between two dates
+-------------------------------------------------------
+
+    SELECT DATEDIFF('2025-12-31', '2025-01-01');    -- result: 364
+
+    SELECT name, DATEDIFF(NOW(), dob) AS days_alive FROM users;
+
+    DATEDIFF(date1, date2) = date1 - date2 in days.
+    Order matters: swap them and the result becomes negative.
+
+    NOW() returns the current date and time.
+    CURDATE() returns only the current date (no time component).
+
+    Practical use:
+    -- Find users older than 30 years (approx 10950 days):
+    SELECT name FROM users WHERE DATEDIFF(CURDATE(), dob) > 10950;
+
+    -- Find accounts created more than 90 days ago:
+    SELECT * FROM users WHERE DATEDIFF(CURDATE(), created_at) > 90;
+
+-------------------------------------------------------
+Other useful date functions (for reference)
+-------------------------------------------------------
+
+    NOW()           -- current date and time     e.g., 2025-06-07 14:30:00
+    CURDATE()       -- current date only         e.g., 2025-06-07
+    YEAR(dob)       -- extract year from date    e.g., 1995
+    MONTH(dob)      -- extract month             e.g., 8
+    DAY(dob)        -- extract day               e.g., 24
+    MONTHNAME(dob)  -- month as text             e.g., August
+    DAYNAME(dob)    -- day of week as text       e.g., Thursday
+
+    Example:
+    SELECT name, YEAR(dob) AS birth_year, MONTHNAME(dob) AS birth_month
+    FROM users;
+
+=======================================================
+CONDITIONAL FUNCTIONS
+=======================================================
+
+-------------------------------------------------------
+13. IF -- inline if-else logic
+-------------------------------------------------------
+
+    SELECT name, IF(salary > 50000, 'High', 'Low') AS salary_category
+    FROM users;
+
+    Syntax:
+    IF(condition, value_if_true, value_if_false)
+
+    Works like a simple ternary -- one condition, two outcomes.
+
+    More examples:
+    SELECT name, IF(is_active = TRUE, 'Active', 'Inactive') AS status
+    FROM users;
+
+    SELECT name, IF(dob IS NULL, 'Unknown', YEAR(dob)) AS birth_year
+    FROM users;
+
+    Nested IF (for more than two outcomes -- but use CASE instead for clarity):
+    SELECT name,
+           IF(salary > 80000, 'Senior',
+           IF(salary > 50000, 'Mid', 'Junior')) AS level
+    FROM users;
+
+-------------------------------------------------------
+14. CASE -- multi-condition if-else (cleaner for 3+ outcomes)
+-------------------------------------------------------
+
+    SELECT name,
+           CASE
+               WHEN salary > 80000 THEN 'Senior'
+               WHEN salary > 50000 THEN 'Mid'
+               WHEN salary > 30000 THEN 'Junior'
+               ELSE 'Intern'
+           END AS level
+    FROM users;
+
+    CASE evaluates conditions top to bottom and returns the FIRST match.
+    ELSE is the fallback if no condition matches (like a default).
+
+    When to use IF vs CASE:
+        IF   -- simple true/false, one condition, two outcomes
+        CASE -- three or more outcomes, much easier to read
+
+=======================================================
+FUNCTIONS -- QUICK REFERENCE
+=======================================================
+
+Function              | Type        | What it does                        | Example
+--------------------------------------------------------------------------------------------
+COUNT(*)              | Aggregate   | Count all rows                      | SELECT COUNT(*) FROM users
+COUNT(col)            | Aggregate   | Count non-NULL values               | SELECT COUNT(salary) FROM users
+MIN(col)              | Aggregate   | Smallest value                      | SELECT MIN(salary) FROM users
+MAX(col)              | Aggregate   | Largest value                       | SELECT MAX(salary) FROM users
+SUM(col)              | Aggregate   | Total of all values                 | SELECT SUM(salary) FROM users
+AVG(col)              | Aggregate   | Mean average                        | SELECT AVG(salary) FROM users
+LENGTH(str)           | String      | Character count                     | SELECT LENGTH(name) FROM users
+LOWER(str)            | String      | Convert to lowercase                | SELECT LOWER(name) FROM users
+UPPER(str)            | String      | Convert to uppercase                | SELECT UPPER(name) FROM users
+CONCAT(a, b, ...)     | String      | Join strings together               | SELECT CONCAT(name,' ',email) FROM users
+CONCAT_WS(sep, ...)   | String      | Join with separator                 | SELECT CONCAT_WS(', ',name,email) FROM users
+ROUND(n, d)           | Numeric     | Round to d decimal places           | SELECT ROUND(salary, 2) FROM users
+FLOOR(n)              | Numeric     | Round down to whole number          | SELECT FLOOR(salary/1000) FROM users
+CEIL(n)               | Numeric     | Round up to whole number            | SELECT CEIL(salary/1000) FROM users
+MOD(n, d)             | Numeric     | Remainder after division            | SELECT MOD(id, 2) FROM users
+DATEDIFF(d1, d2)      | Date        | Days between two dates              | SELECT DATEDIFF(NOW(), dob) FROM users
+NOW()                 | Date        | Current date and time               | SELECT NOW()
+CURDATE()             | Date        | Current date only                   | SELECT CURDATE()
+YEAR / MONTH / DAY    | Date        | Extract part of a date              | SELECT YEAR(dob) FROM users
+IF(cond, t, f)        | Conditional | Inline true/false result            | SELECT IF(salary>50000,'High','Low') FROM users
+CASE WHEN ... END     | Conditional | Multi-branch conditional            | see example above
+
+=======================================================

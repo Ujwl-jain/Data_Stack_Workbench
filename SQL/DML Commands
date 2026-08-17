@@ -1,0 +1,265 @@
+=======================================================
+SQL NOTES: DML COMMANDS (Data Manipulation Language)
+=======================================================
+
+DML commands work on the DATA inside tables -- not the structure.
+You use DML to add, change, and remove rows.
+
+DML Command  | What it does
+--------------------------------------
+INSERT       | Add new rows to a table
+UPDATE       | Modify existing rows
+DELETE       | Remove specific rows
+
+NOTE: Unlike DDL, DML changes CAN be undone using ROLLBACK
+      if you are inside a transaction. More on this at the end.
+
+=======================================================
+1. INSERT -- add new rows into a table
+=======================================================
+
+-------------------------------------------------------
+Way 1: Insert WITHOUT specifying column names
+-------------------------------------------------------
+
+    INSERT INTO users VALUES
+    (1, 'Alice',  'alice@gmail.com',  'Male', '2000-05-09'),
+    (2, 'Alice2', 'alice2@gmail.com', 'Male', '2001-08-14');
+
+    You must provide values for EVERY column in the table,
+    in the EXACT order the columns were defined during CREATE TABLE.
+
+    Problem with this approach:
+        - If you add a new column to the table later, this query breaks.
+        - You are forced to provide values even for AUTO_INCREMENT columns,
+          which defeats the purpose of AUTO_INCREMENT.
+        - Easy to mix up column order and insert wrong data silently.
+
+    When to use: quick one-off inserts during testing only.
+
+-------------------------------------------------------
+Way 2: Insert WITH specifying column names (RECOMMENDED)
+-------------------------------------------------------
+
+    INSERT INTO users (name, email, gender, dob) VALUES
+    ('Alice',  'alice@gmail.com',  'Male', '2000-05-09'),
+    ('Alice2', 'alice2@gmail.com', 'Male', '2001-08-14'),
+    ('Alice3', 'alice3@gmail.com', 'Male', '2002-03-21');
+
+    You list only the columns you want to provide values for.
+    Columns you skip get their value automatically:
+        - AUTO_INCREMENT column (id) -- MySQL assigns the next number
+        - DEFAULT column (created_at) -- MySQL uses the default value
+        - Nullable column -- MySQL stores NULL if no default is set
+
+    Why this is the best way:
+        - You don't need to provide id -- MySQL handles it.
+        - Adding new columns to the table later won't break this query.
+        - Column order in your INSERT does not have to match table order.
+        - Clear and readable -- you can see exactly what is being inserted.
+
+-------------------------------------------------------
+INSERT common mistakes to avoid
+-------------------------------------------------------
+
+    -- WRONG: values count does not match columns listed
+    INSERT INTO users (name, email) VALUES ('Alice');
+    -- ERROR: Column count doesn't match value count
+
+    -- WRONG: inserting a gender value not in ENUM list
+    INSERT INTO users (name, email, gender) VALUES ('Alice', 'a@b.com', 'attack helicopter');
+    -- ERROR: Data truncated for column 'gender'
+
+    -- WRONG: inserting duplicate email (UNIQUE constraint)
+    INSERT INTO users (name, email) VALUES ('Bob', 'alice@gmail.com');
+    -- ERROR: Duplicate entry for key 'email'
+
+    -- WRONG: skipping a NOT NULL column with no DEFAULT
+    INSERT INTO users (email) VALUES ('alice@gmail.com');
+    -- ERROR: Field 'name' doesn't have a default value
+
+=======================================================
+2. UPDATE -- modify existing rows
+=======================================================
+
+-------------------------------------------------------
+Basic syntax
+-------------------------------------------------------
+
+    UPDATE table_name
+    SET    column1 = value1, column2 = value2, ...
+    WHERE  condition;
+
+-------------------------------------------------------
+WARNING: UPDATE without WHERE
+-------------------------------------------------------
+
+    UPDATE users SET salary = 45000;
+
+    This updates EVERY row in the table.
+    Every single user's salary becomes 45000.
+    There is no automatic undo.
+
+    When is this actually useful:
+        When you genuinely want to set a column to the same value
+        across ALL rows. For example:
+            -- Give everyone a default DOB if none was set:
+            UPDATE users SET dob = '1999-01-01' WHERE dob IS NULL;
+
+    Rule of thumb: always write your WHERE clause FIRST before running UPDATE.
+
+-------------------------------------------------------
+UPDATE a single row
+-------------------------------------------------------
+
+    UPDATE users SET salary = 45000 WHERE id = 1;
+
+    Only the row where id = 1 is affected.
+    Using PRIMARY KEY in WHERE is the safest way to target one exact row.
+
+-------------------------------------------------------
+UPDATE multiple columns at once
+-------------------------------------------------------
+
+    UPDATE users SET salary = 45000, email = 'newemail@gmail.com' WHERE id = 1;
+
+    Separate multiple column assignments with a comma inside SET.
+    All changes apply to the same row(s) matched by WHERE.
+
+-------------------------------------------------------
+UPDATE using the existing value (calculated update)
+-------------------------------------------------------
+
+    UPDATE users SET salary = salary + 10000 WHERE salary < 60000;
+
+    salary + 10000 reads the current salary and adds 10000 to it.
+    This is called a calculated update -- you don't need to know the current value.
+    Only rows where salary is below 60000 are affected.
+
+-------------------------------------------------------
+More UPDATE examples
+-------------------------------------------------------
+
+    -- 1. Update name using email as the identifier:
+    UPDATE users SET name = 'Rob the Bob' WHERE email = 'xyz@gmail.com';
+
+    -- 2. Give a raise to all underpaid employees:
+    UPDATE users SET salary = salary + 10000 WHERE salary < 60000;
+
+    -- 3. Update multiple rows matching a condition:
+    UPDATE users SET is_active = FALSE WHERE dob < '1950-01-01';
+
+    -- 4. Update using BETWEEN:
+    UPDATE users SET salary = 50000 WHERE id BETWEEN 5 AND 10;
+
+=======================================================
+3. DELETE -- remove specific rows from a table
+=======================================================
+
+-------------------------------------------------------
+Basic syntax
+-------------------------------------------------------
+
+    DELETE FROM table_name WHERE condition;
+
+-------------------------------------------------------
+Delete a specific row
+-------------------------------------------------------
+
+    DELETE FROM users WHERE id = 1;
+    DELETE FROM users WHERE email = 'alice@gmail.com';
+
+    Only the row(s) matching the WHERE condition are deleted.
+    Using PRIMARY KEY in WHERE is safest -- targets exactly one row.
+
+-------------------------------------------------------
+Delete rows matching a condition
+-------------------------------------------------------
+
+    DELETE FROM users WHERE salary < 65000;
+    DELETE FROM users WHERE is_active = FALSE;
+    DELETE FROM users WHERE dob < '1950-01-01';
+
+    All rows satisfying the condition are deleted.
+
+-------------------------------------------------------
+WARNING: DELETE without WHERE
+-------------------------------------------------------
+
+    DELETE FROM users;
+
+    Deletes every single row in the table.
+    The table structure (columns, constraints) stays intact.
+    AUTO_INCREMENT counter is NOT reset (it continues from where it stopped).
+
+-------------------------------------------------------
+DELETE vs TRUNCATE vs DROP (important comparison)
+-------------------------------------------------------
+
+    Command             | Removes data | Removes structure | WHERE allowed | Resets AUTO_INCREMENT
+    --------------------------------------------------------------------------------------
+    DELETE FROM users   | Yes          | No                | Yes           | No
+    TRUNCATE TABLE users| Yes          | No                | No            | Yes
+    DROP TABLE users    | Yes          | Yes               | No            | N/A (table gone)
+
+    DELETE   -- surgical, row by row, can filter with WHERE, can be rolled back
+    TRUNCATE -- wipes all rows at once (faster), resets counter, harder to roll back
+    DROP     -- destroys the entire table including its structure
+
+-------------------------------------------------------
+How to drop the entire table
+-------------------------------------------------------
+
+    DROP TABLE users;
+
+    This does NOT just delete the data.
+    It deletes the TABLE ITSELF -- structure, columns, constraints, everything.
+    After this, even SELECT * FROM users will throw an error (table doesn't exist).
+
+    Safe version:
+    DROP TABLE IF EXISTS users;
+    -- No error if the table doesn't already exist.
+
+=======================================================
+TRANSACTIONS (bonus -- ties DML together)
+=======================================================
+
+DML commands (INSERT, UPDATE, DELETE) can be wrapped in a transaction.
+A transaction lets you group multiple DML operations and either:
+    COMMIT   -- save all changes permanently
+    ROLLBACK -- undo all changes as if they never happened
+
+    START TRANSACTION;
+
+    UPDATE users SET salary = 99999 WHERE id = 1;
+    DELETE FROM users WHERE id = 2;
+
+    -- something went wrong? undo everything:
+    ROLLBACK;
+
+    -- everything looks good? save permanently:
+    COMMIT;
+
+    Why this matters:
+        Without a transaction, every DML command auto-commits immediately.
+        With a transaction, you have a safety net before making it permanent.
+        Critical for banking, order processing, any multi-step operation.
+
+=======================================================
+DML QUICK REFERENCE
+=======================================================
+
+Task                              | Query
+-------------------------------------------------------------------------------
+Insert one row (named columns)    | INSERT INTO users (name, email) VALUES ('Alice', 'a@b.com');
+Insert multiple rows              | INSERT INTO users (name, email) VALUES (...), (...), (...);
+Update one row by ID              | UPDATE users SET salary = 50000 WHERE id = 1;
+Update multiple columns           | UPDATE users SET salary = 50000, email = 'x@y.com' WHERE id = 1;
+Calculated update                 | UPDATE users SET salary = salary + 5000 WHERE salary < 40000;
+Delete one row                    | DELETE FROM users WHERE id = 1;
+Delete rows by condition          | DELETE FROM users WHERE salary < 30000;
+Delete all rows (keep structure)  | DELETE FROM users;
+Wipe all rows + reset counter     | TRUNCATE TABLE users;
+Delete table entirely             | DROP TABLE users;
+
+=======================================================

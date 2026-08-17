@@ -1,0 +1,302 @@
+=======================================================
+SQL NOTES: SELECTING DATA FROM TABLES
+=======================================================
+
+-------------------------------------------------------
+REFERENCE QUERY
+-------------------------------------------------------
+
+SELECT * FROM users;
+
+Let's understand each part:
+
+-> SELECT : Tells the database you want to retrieve data.
+            Think of it like saying "give me" -- you are not changing anything,
+            just reading.
+
+-> *      : Means ALL columns. Instead of listing column names one by one,
+            * is a shortcut for "everything".
+
+-> FROM   : Tells the database which table to look in.
+
+-> users  : The table name you are selecting data from.
+
+=======================================================
+SELECTING DATA -- COMMON PATTERNS
+=======================================================
+
+-------------------------------------------------------
+1. Select ALL data from a table
+-------------------------------------------------------
+
+    SELECT * FROM users;
+
+    Retrieves every row and every column from the users table.
+    Use during development/debugging. Avoid in production for large tables
+    (fetching columns you don't need wastes memory and slows queries).
+
+-------------------------------------------------------
+2. Select SPECIFIC columns
+-------------------------------------------------------
+
+    SELECT name, email FROM users;
+    SELECT email, gender FROM users;
+
+    Instead of *, you list only the columns you need separated by commas.
+    The order of columns in your SELECT controls the order in the result.
+
+    Why prefer this over * :
+        - Faster (less data transferred)
+        - Clearer (you know exactly what you are getting)
+        - Safer (adding new columns to the table won't break your query)
+
+-------------------------------------------------------
+3. Select with a COLUMN ALIAS (rename output column)
+-------------------------------------------------------
+
+    SELECT name AS full_name, email AS contact FROM users;
+
+    AS renames the column only in the output/result.
+    The actual table and column in the database are NOT changed.
+    Useful for making results more readable.
+
+-------------------------------------------------------
+4. Select DISTINCT (remove duplicates from result)
+-------------------------------------------------------
+
+    SELECT DISTINCT gender FROM users;
+
+    Returns only unique values from the column.
+    Useful when you want to know what options exist without repetition.
+    e.g., instead of: Male, Female, Male, Others, Male
+          you get   : Male, Female, Others
+
+-------------------------------------------------------
+5. Select with WHERE (filter rows by condition)
+-------------------------------------------------------
+
+    SELECT * FROM users WHERE gender = 'Female';
+    SELECT name, email FROM users WHERE is_active = TRUE;
+
+    WHERE filters which rows are returned.
+    Only rows that satisfy the condition are included in the result.
+
+    Common operators used in WHERE:
+        =       equal to                WHERE gender = 'Male'
+        !=      not equal to            WHERE gender != 'Male'
+        >       greater than            WHERE age > 18
+        <       less than               WHERE age < 60
+        >=      greater than or equal   WHERE age >= 18
+        <=      less than or equal      WHERE age <= 60
+        BETWEEN range (inclusive)       WHERE age BETWEEN 18 AND 30
+        LIKE    pattern match           WHERE name LIKE 'A%'
+        IN      matches a list          WHERE gender IN ('Male', 'Female')
+        IS NULL column has no value     WHERE dob IS NULL
+
+-------------------------------------------------------
+6. Select with ORDER BY (sort the results)
+-------------------------------------------------------
+
+    SELECT * FROM users ORDER BY name ASC;
+    SELECT * FROM users ORDER BY created_at DESC;
+
+    ASC  -- ascending order  (A to Z, oldest to newest, smallest to largest)
+    DESC -- descending order (Z to A, newest to oldest, largest to smallest)
+
+    Default is ASC if you don't specify.
+
+-------------------------------------------------------
+7. Select with LIMIT (restrict number of rows returned)
+-------------------------------------------------------
+
+    SELECT * FROM users LIMIT 5;
+    SELECT * FROM users ORDER BY created_at DESC LIMIT 10;
+
+    LIMIT controls how many rows come back.
+    Useful for pagination, previewing data, or getting "top N" results.
+
+-------------------------------------------------------
+8. Renaming a TABLE
+-------------------------------------------------------
+
+    RENAME TABLE users TO customers;
+
+    This permanently renames the table in the database.
+    After this, all queries must use the new name.
+
+    Before rename:    SELECT * FROM users;
+    After rename:     SELECT * FROM customers;
+
+    Note: This is a DDL command (explained in next section).
+          Use carefully -- any existing queries or code using the old name will break.
+
+=======================================================
+DDL COMMANDS (Data Definition Language)
+=======================================================
+
+DDL commands define and modify the STRUCTURE of the database.
+They work on tables, columns, and databases themselves -- not the data inside.
+DDL changes are auto-committed -- you cannot undo them with ROLLBACK.
+
+-------------------------------------------------------
+REFERENCE STRUCTURE
+-------------------------------------------------------
+
+DDL Command    | What it does
+---------------------------------------------------
+CREATE         | Creates a new database or table
+ALTER          | Modifies an existing table structure
+DROP           | Permanently deletes a table or database
+TRUNCATE       | Deletes all rows but keeps the table structure
+RENAME         | Renames a table
+
+-------------------------------------------------------
+1. CREATE -- create a new table or database
+-------------------------------------------------------
+
+    -- Create a database:
+    CREATE DATABASE school;
+
+    -- Create a table:
+    CREATE TABLE users (
+        id         INT           AUTO_INCREMENT PRIMARY KEY,
+        name       VARCHAR(100)  NOT NULL,
+        email      VARCHAR(100)  UNIQUE NOT NULL,
+        created_at TIMESTAMP     DEFAULT CURRENT_TIMESTAMP
+    );
+
+    Creates a brand new table with the column definitions you provide.
+    Table does not exist yet -- this is how you bring it into existence.
+
+-------------------------------------------------------
+2. ALTER -- modify an existing table's structure
+-------------------------------------------------------
+
+    -- Add a new column:
+    ALTER TABLE users ADD phone VARCHAR(15);
+
+    -- Remove a column:
+    ALTER TABLE users DROP COLUMN phone;
+
+    -- Change a column's data type:
+    ALTER TABLE users MODIFY COLUMN name VARCHAR(200);
+
+    -- Rename a column:
+    ALTER TABLE users RENAME COLUMN name TO full_name;
+
+    -- Add a constraint to an existing column:
+    ALTER TABLE users ADD UNIQUE (email);
+
+    The moment you write CONSTRAINT, a name becomes mandatory:
+    ALTER TABLE users ADD CONSTRAINT uq_users_email UNIQUE (email);
+
+    Use ALTER when the table already exists and you need to update its structure
+    without deleting and recreating it.
+
+-------------------------------------------------------
+3. DROP -- permanently delete a table or database
+-------------------------------------------------------
+
+    -- Drop a table:
+    DROP TABLE users;
+
+    -- Drop a database:
+    DROP DATABASE school;
+
+    WARNING: DROP deletes the table AND all data inside it permanently.
+             There is no undo. Use with extreme caution.
+
+    Safe version (no error if table doesn't exist):
+    DROP TABLE IF EXISTS users;
+
+-------------------------------------------------------
+4. TRUNCATE -- delete all rows, keep the table structure
+-------------------------------------------------------
+
+    TRUNCATE TABLE users;
+
+    Removes every row from the table instantly.
+    The table itself still exists with all its columns and constraints.
+    AUTO_INCREMENT counter resets back to 1.
+
+    TRUNCATE vs DROP:
+        TRUNCATE -- table structure remains, data is gone
+        DROP     -- table structure AND data are both gone
+
+    TRUNCATE vs DELETE (DELETE is DML, covered separately):
+        TRUNCATE -- removes all rows at once, faster, cannot use WHERE
+        DELETE   -- removes rows one by one, slower, can use WHERE to filter
+
+-------------------------------------------------------
+5. RENAME -- rename a table
+-------------------------------------------------------
+
+    RENAME TABLE users TO customers;
+    RENAME TABLE customers TO users;   -- rename it back
+
+    Only the name changes -- structure and data remain intact.
+    All future queries must use the new table name.
+
+=======================================================
+DQL COMMANDS (Data Query Language)
+=======================================================
+
+DQL is the command used specifically to RETRIEVE data from the database.
+It does not create, modify, or delete anything.
+There is only one DQL command: SELECT.
+
+Everything in the "Selecting Data" section above is DQL.
+Here is a consolidated view of the full SELECT structure:
+
+-------------------------------------------------------
+Full SELECT Syntax (in order)
+-------------------------------------------------------
+
+    SELECT   column1, column2, ...     -- which columns (or * for all)
+    FROM     table_name                -- which table
+    WHERE    condition                 -- filter rows (optional)
+    ORDER BY column ASC/DESC          -- sort results (optional)
+    LIMIT    number;                   -- restrict row count (optional)
+
+    All clauses after FROM are optional.
+    But they must appear in this exact order when used together.
+
+-------------------------------------------------------
+Examples combining multiple clauses
+-------------------------------------------------------
+
+    -- Get top 5 female users sorted by name:
+    SELECT name, email
+    FROM users
+    WHERE gender = 'Female'
+    ORDER BY name ASC
+    LIMIT 5;
+
+    -- Get all users created in the last 30 days:
+    SELECT *
+    FROM users
+    WHERE created_at >= NOW() - INTERVAL 30 DAY
+    ORDER BY created_at DESC;
+
+    -- Get count of users per gender (preview -- uses GROUP BY):
+    SELECT gender, COUNT(*) AS total
+    FROM users
+    GROUP BY gender;
+
+-------------------------------------------------------
+DQL Quick Reference
+-------------------------------------------------------
+
+Clause      | Purpose                          | Example
+----------------------------------------------------------------------
+SELECT      | Choose columns                   | SELECT name, email
+FROM        | Choose table                     | FROM users
+WHERE       | Filter rows by condition         | WHERE gender = 'Female'
+ORDER BY    | Sort results                     | ORDER BY name ASC
+LIMIT       | Max number of rows to return     | LIMIT 10
+DISTINCT    | Remove duplicate values          | SELECT DISTINCT gender
+AS          | Rename column in output          | SELECT name AS full_name
+COUNT()     | Count rows                       | SELECT COUNT(*) FROM users
+NOW()       | Current date and time            | WHERE created_at >= NOW()
+
+=======================================================

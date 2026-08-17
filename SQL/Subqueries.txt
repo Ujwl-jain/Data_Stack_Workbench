@@ -1,0 +1,296 @@
+=======================================================
+SQL NOTES: SUBQUERIES
+=======================================================
+
+A subquery is a query nested inside another query.
+The inner query runs first, and its result is used by the outer query.
+
+Think of it like nested if-else, but instead of conditions, you are
+nesting full SELECT statements -- the inner one feeds the outer one.
+
+Subqueries can appear in three places:
+    SELECT clause -- to compute a value per row
+    FROM clause   -- to treat a query result as a temporary table
+    WHERE clause  -- to filter rows based on another query's result
+
+=======================================================
+THE PROBLEM -- WHY SUBQUERIES EXIST
+=======================================================
+
+Goal: fetch users who earn more than the average salary.
+
+-------------------------------------------------------
+Step 1: Find the average salary manually
+-------------------------------------------------------
+
+    SELECT AVG(salary) FROM users;
+    -- Result: 65000.00
+
+-------------------------------------------------------
+Step 2: Hardcode that value into a second query
+-------------------------------------------------------
+
+    SELECT * FROM users WHERE salary > 65000;
+
+    This works, but has a real problem:
+        You manually typed 65000 by reading the result of query 1.
+        If salaries change tomorrow, the average changes too.
+        Your hardcoded 65000 is now stale and wrong.
+        You would have to repeat this two-step process every single time.
+
+-------------------------------------------------------
+Step 3: The subquery -- combine both steps into ONE query
+-------------------------------------------------------
+
+    SELECT * FROM users WHERE salary > (SELECT AVG(salary) FROM users);
+
+    NOTE: The inner query MUST be wrapped in parentheses ( ).
+          Your original example was missing these -- without them,
+          MySQL throws a syntax error.
+
+    What happens internally:
+        Step 1: MySQL runs the inner query first: SELECT AVG(salary) FROM users
+                This returns a single value, e.g., 65000.00
+        Step 2: MySQL substitutes that value into the outer query:
+                SELECT * FROM users WHERE salary > 65000.00
+        Step 3: Outer query runs and returns the result.
+
+    This is always correct and up to date, no matter how the data changes.
+    One query, one execution, always accurate.
+
+=======================================================
+TYPES OF SUBQUERIES (by what they return)
+=======================================================
+
+It is important to know what your subquery returns, because that
+determines which operator you are allowed to use with it.
+
+Subquery returns          | Compatible operators
+---------------------------------------------------------------
+Single value (scalar)     | =, >, <, >=, <=, !=
+Single column, many rows  | IN, NOT IN, ANY, ALL
+Multiple columns/rows     | Used in FROM (as a temporary table)
+EXISTS check              | EXISTS, NOT EXISTS
+
+=======================================================
+1. SUBQUERY IN WHERE CLAUSE
+=======================================================
+
+This is the most common type of subquery.
+
+-------------------------------------------------------
+Scalar subquery (returns ONE single value)
+-------------------------------------------------------
+
+    SELECT * FROM users WHERE salary > (SELECT AVG(salary) FROM users);
+
+    The inner query returns exactly one value (one number).
+    Can be used with single-value comparison operators: =, >, <, >=, <=
+
+    More examples:
+    -- Users earning the maximum salary:
+    SELECT * FROM users WHERE salary = (SELECT MAX(salary) FROM users);
+
+    -- Users older than the youngest user:
+    SELECT * FROM users WHERE dob < (SELECT MAX(dob) FROM users);
+
+-------------------------------------------------------
+IN -- subquery returns a LIST of values
+-------------------------------------------------------
+
+    SELECT * FROM users
+    WHERE id IN (SELECT user_id FROM addresses WHERE city = 'Mumbai');
+
+    Inner query returns multiple rows (a list of user_ids).
+    Outer query checks if id matches ANY value in that list.
+
+    Plain English: "give me all users whose id appears in the list
+                    of user_ids that live in Mumbai"
+
+    NOT IN -- the opposite, exclude matches:
+    SELECT * FROM users
+    WHERE id NOT IN (SELECT user_id FROM addresses);
+    -- Users who have NO address at all.
+
+-------------------------------------------------------
+ANY -- compare against ANY value in the list
+-------------------------------------------------------
+
+    SELECT * FROM users
+    WHERE salary > ANY (SELECT salary FROM users WHERE gender = 'Female');
+
+    Returns TRUE if the comparison is true for AT LEAST ONE value
+    in the subquery result.
+    Plain English: "salary greater than at least one female's salary"
+                   (i.e., greater than the MINIMUM female salary)
+
+-------------------------------------------------------
+ALL -- compare against ALL values in the list
+-------------------------------------------------------
+
+    SELECT * FROM users
+    WHERE salary > ALL (SELECT salary FROM users WHERE gender = 'Female');
+
+    Returns TRUE only if the comparison is true for EVERY value
+    in the subquery result.
+    Plain English: "salary greater than every single female's salary"
+                   (i.e., greater than the MAXIMUM female salary)
+
+    ANY vs ALL:
+        salary > ANY (...)  -- greater than at least the MIN of the list
+        salary > ALL (...)  -- greater than even the MAX of the list
+        ALL is a stricter condition than ANY.
+
+-------------------------------------------------------
+EXISTS -- check if subquery returns ANY rows at all
+-------------------------------------------------------
+
+    SELECT * FROM users u
+    WHERE EXISTS (SELECT 1 FROM addresses a WHERE a.user_id = u.id);
+
+    Returns TRUE if the subquery returns at least one row, FALSE if empty.
+    Does not care about the actual values -- only whether rows exist.
+    Often faster than IN for large datasets since MySQL can stop
+    as soon as it finds one matching row.
+
+    Plain English: "give me users for whom at least one address record exists"
+
+    NOT EXISTS -- the opposite:
+    SELECT * FROM users u
+    WHERE NOT EXISTS (SELECT 1 FROM addresses a WHERE a.user_id = u.id);
+    -- Users who have NO address. (Same result as NOT IN example above,
+    --  but generally performs better on large tables.)
+
+=======================================================
+2. SUBQUERY IN SELECT CLAUSE
+=======================================================
+
+Used to calculate a value for each row, often comparing it to an
+aggregate across the whole table.
+
+    SELECT
+        name,
+        salary,
+        (SELECT AVG(salary) FROM users) AS company_avg_salary,
+        salary - (SELECT AVG(salary) FROM users) AS difference_from_avg
+    FROM users;
+
+    Result:
+        name    | salary | company_avg_salary | difference_from_avg
+        Alice   | 75000  | 65000.00            | 10000.00
+        Bob     | 50000  | 65000.00            | -15000.00
+
+    The subquery here returns ONE value, and it is repeated for every row.
+    Must be a scalar subquery (single value) when used in SELECT this way.
+
+=======================================================
+3. SUBQUERY IN FROM CLAUSE (Derived Table)
+=======================================================
+
+The subquery result is treated as a temporary virtual table that the
+outer query can select from, filter, or join.
+This temporary table MUST be given an alias (a name).
+
+    SELECT dept_avg.gender, dept_avg.avg_salary
+    FROM (
+        SELECT gender, AVG(salary) AS avg_salary
+        FROM users
+        GROUP BY gender
+    ) AS dept_avg
+    WHERE dept_avg.avg_salary > 50000;
+
+    NOTE: The alias (dept_avg here) is REQUIRED.
+          MySQL throws an error if a FROM subquery has no alias.
+
+    What is happening:
+        Step 1: Inner query groups users by gender and calculates AVG(salary)
+                Result acts like a temporary table called dept_avg
+        Step 2: Outer query filters that temporary table further
+
+    Use when: you need to filter or join on top of an already
+              aggregated/grouped result.
+
+=======================================================
+CORRELATED SUBQUERY (advanced but important)
+=======================================================
+
+A correlated subquery references a column from the OUTER query.
+It cannot run on its own -- it depends on the current row being processed
+by the outer query. It runs ONCE PER ROW of the outer query (unlike a
+regular subquery which runs once total).
+
+    SELECT name, salary, gender
+    FROM users u
+    WHERE salary > (
+        SELECT AVG(salary) FROM users WHERE gender = u.gender
+    );
+
+    Notice u.gender inside the inner query -- it refers to the outer
+    query's current row. This is what makes it "correlated".
+
+    Plain English: "give me users earning more than the average salary
+                    of their OWN gender" (not the overall average)
+
+    Regular subquery vs Correlated subquery:
+        Regular subquery     -- inner query runs ONCE, result reused for all rows
+                                 e.g., (SELECT AVG(salary) FROM users)
+        Correlated subquery  -- inner query runs ONCE PER ROW of outer query
+                                 e.g., (SELECT AVG(salary) FROM users WHERE gender = u.gender)
+
+    Performance note: correlated subqueries can be slow on large tables
+    since the inner query re-runs for every outer row. Often a JOIN with
+    GROUP BY can achieve the same result faster.
+
+=======================================================
+SUBQUERY vs JOIN -- WHEN TO USE WHICH
+=======================================================
+
+    Use a subquery when:
+        - You need a single aggregate value to filter against (AVG, MAX, MIN)
+        - The logic is naturally "find rows where X relates to a calculated value"
+        - Readability matters more than raw performance on smaller tables
+
+    Use a JOIN when:
+        - You need columns from BOTH tables in the final result
+        - Performance matters on large tables (JOINs are often faster than
+          correlated subqueries)
+        - You are combining/matching data, not just filtering by it
+
+    Example -- same result, two approaches:
+
+    Using subquery (only returns users table columns):
+    SELECT * FROM users
+    WHERE id IN (SELECT user_id FROM addresses WHERE city = 'Mumbai');
+
+    Using JOIN (can return columns from BOTH tables):
+    SELECT u.*, a.city
+    FROM users u
+    INNER JOIN addresses a ON u.id = a.user_id
+    WHERE a.city = 'Mumbai';
+
+=======================================================
+QUICK REFERENCE
+=======================================================
+
+Location  | Purpose                              | Returns
+------------------------------------------------------------------------
+WHERE     | Filter rows using inner query result | scalar, list, or boolean
+SELECT    | Compute a value per row               | scalar (single value)
+FROM      | Use result as a temporary table       | table (must be aliased)
+
+Operator   | Use when subquery returns
+------------------------------------------------------
+=, >, <    | a single value (scalar)
+IN         | a list of values, match ANY of them
+NOT IN     | a list of values, match NONE of them
+ANY        | true if true for at least one value
+ALL        | true if true for every value
+EXISTS     | true if subquery returns at least one row
+NOT EXISTS | true if subquery returns zero rows
+
+Common mistake to avoid:
+    Forgetting parentheses around the inner query -- always required.
+    WRONG: WHERE salary > SELECT AVG(salary) FROM users
+    RIGHT: WHERE salary > (SELECT AVG(salary) FROM users)
+
+=======================================================

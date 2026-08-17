@@ -1,0 +1,339 @@
+=======================================================
+SQL NOTES: INDEXES
+=======================================================
+
+An index is a separate data structure that MySQL maintains alongside
+your table to make data retrieval faster.
+
+Think of it exactly like a book index:
+    Without index: to find the word "transaction", you read every page
+                   from page 1 to the end until you find it. (full table scan)
+    With index:    you go to the index at the back, see "transaction -> page 94",
+                   flip directly to page 94. Done.
+
+MySQL does the same thing with rows.
+
+=======================================================
+YOUR DOUBT ANSWERED FIRST
+=======================================================
+
+    "Once we create an index we are just normally using SELECT query,
+     that is what we are doing usually -- so how is indexing even
+     helping fetching the data faster?"
+
+    This is the right question to ask. Here is exactly what happens:
+
+    -------------------------------------------------------
+    WITHOUT an index -- what MySQL actually does
+    -------------------------------------------------------
+
+    SELECT * FROM users WHERE email = 'alice@gmail.com';
+
+    MySQL has no shortcut. It starts at row 1 and reads every single row
+    in the table, checking each one: "is this email alice@gmail.com?"
+    If your table has 1 million rows, MySQL checks all 1 million rows.
+    This is called a FULL TABLE SCAN.
+
+    You do not see this happening -- the SELECT query looks the same.
+    But internally MySQL is doing a lot of unnecessary work.
+
+    -------------------------------------------------------
+    WITH an index -- what MySQL actually does
+    -------------------------------------------------------
+
+    CREATE INDEX idx_email ON users(email);
+
+    SELECT * FROM users WHERE email = 'alice@gmail.com';
+
+    The SELECT query looks identical. Nothing changes on your end.
+    But internally MySQL no longer reads the table at all for this lookup.
+
+    Instead, MySQL consults the index -- a separate structure that looks
+    roughly like this (sorted and organised):
+
+        Index on email (B-Tree structure):
+        email                   | pointer to row location on disk
+        ----------------------- | --------------------------------
+        alice@gmail.com         | -> row at disk position 1042
+        bob@gmail.com           | -> row at disk position 2187
+        charlie@gmail.com       | -> row at disk position 3091
+        diana@gmail.com         | -> row at disk position 4203
+        ...                     | ...
+
+    Because the index is SORTED, MySQL uses a Binary Search:
+        - Jump to the middle of the index
+        - Is 'alice@gmail.com' before or after the middle?
+        - Jump to the relevant half, repeat
+        - Found in roughly log2(N) steps instead of N steps
+
+    For 1 million rows:
+        Full table scan  = up to 1,000,000 comparisons
+        Index B-Tree     = roughly 20 comparisons (log2 of 1,000,000 ≈ 20)
+
+    Once found in the index, MySQL reads the disk pointer and jumps
+    directly to that exact row location. Done.
+
+    The SELECT query you write is exactly the same.
+    MySQL's query optimiser decides automatically whether to use the index.
+    You just create the index -- MySQL handles the rest invisibly.
+
+    -------------------------------------------------------
+    Why the index is stored separately (not inside the table)
+    -------------------------------------------------------
+
+    The table stores rows in insertion order (not sorted).
+    Sorting the table itself every time you insert a row would be slow.
+    The index is a separate, always-sorted structure that points back to rows.
+    This way inserts just append to the table; only the index needs updating.
+
+=======================================================
+HOW MYSQL STORES INDEXES INTERNALLY (B-TREE)
+=======================================================
+
+MySQL's default index type is a B-Tree (Balanced Tree).
+
+Structure:
+                        [M]
+                       /   \
+                   [D,H]   [R,V]
+                  / | \    / | \
+               [A,C][E,G][I,L][N,P][S,U][W,Z]
+
+    Each node contains sorted values and pointers to child nodes.
+    To find a value, MySQL traverses from the root downward.
+    Balanced means all leaf nodes are at the same depth -- always fast.
+    Depth stays small even for millions of rows (typically 3-4 levels deep).
+
+    Leaf nodes in InnoDB also store pointers directly to the row data on disk.
+    This is why lookup jumps straight to the row after finding it in the index.
+
+    You do not need to manage this -- MySQL builds and maintains it automatically.
+    Understanding it answers your question: the speed comes from
+    traversing this sorted tree instead of scanning every row.
+
+=======================================================
+SHOW INDEXES
+=======================================================
+
+    SHOW INDEXES FROM users;
+
+    Shows all indexes on the users table.
+    The PRIMARY KEY automatically creates an index on the id column.
+    This is why lookups by id are always fast -- there is already an index.
+
+    Output columns you will see:
+        Table      -- table name
+        Key_name   -- index name (PRIMARY for primary key)
+        Column_name-- which column is indexed
+        Non_unique -- 0 means unique index, 1 means duplicates allowed
+        Index_type -- usually BTREE
+
+=======================================================
+CREATING INDEXES
+=======================================================
+
+-------------------------------------------------------
+1. Single column index
+-------------------------------------------------------
+
+    CREATE INDEX idx_email ON users(email);
+
+    Creates an index on the email column alone.
+    Now queries filtering by email are fast.
+
+    Fast:   SELECT * FROM users WHERE email = 'alice@gmail.com';
+    Fast:   SELECT * FROM users ORDER BY email;
+    No help: SELECT * FROM users WHERE city = 'Mumbai';
+             (city has no index, still a full table scan)
+
+-------------------------------------------------------
+2. Multi column index (Composite index)
+-------------------------------------------------------
+
+    CREATE INDEX idx_name_gender ON users(name, gender);
+
+    Creates a single index on the combination of name and gender.
+    The order of columns in the index definition matters significantly.
+    This index is built sorted by name first, then gender within each name.
+
+    Fast (uses index):
+        SELECT * FROM users WHERE name = 'Alice';
+        SELECT * FROM users WHERE name = 'Alice' AND gender = 'Female';
+
+    No help (does NOT use this index):
+        SELECT * FROM users WHERE gender = 'Female';
+
+    Why: think of a phone book sorted by last name then first name.
+         You can look up "Sharma, Rahul" easily.
+         You cannot quickly look up "all Rahuls" without scanning everything
+         because the book is sorted by last name first, not first name.
+
+    Rule: a composite index helps queries that use the LEFTMOST column(s).
+          Skipping the first column = index not used.
+
+    This is called the LEFTMOST PREFIX RULE.
+
+    idx_name_gender (name, gender):
+        WHERE name = ?                  -- uses index (leftmost column)
+        WHERE name = ? AND gender = ?   -- uses index (both columns)
+        WHERE gender = ?                -- does NOT use index (skipped name)
+
+-------------------------------------------------------
+3. Unique index
+-------------------------------------------------------
+
+    CREATE UNIQUE INDEX idx_unique_email ON users(email);
+
+    Same as a regular index but also enforces that no two rows
+    can have the same value in this column.
+    Adding UNIQUE constraint via ALTER TABLE also creates this automatically.
+
+=======================================================
+INDEX ORDER MATTERS
+=======================================================
+
+    Order matters in two ways:
+
+    1. Column order in a composite index (leftmost prefix rule, shown above)
+
+    2. ASC vs DESC in the index
+       CREATE INDEX idx_salary_desc ON users(salary DESC);
+
+       Useful when your queries almost always sort in descending order:
+       SELECT * FROM users ORDER BY salary DESC LIMIT 10;
+       MySQL can scan the index front-to-back instead of back-to-front.
+       Minor optimisation -- usually not needed unless you profile slow queries.
+
+=======================================================
+WHY DOES INDEX SLOW DOWN INSERT, UPDATE, DELETE?
+=======================================================
+
+    (This is your unanswered Reason?? from your notes)
+
+    When you INSERT a new row:
+        Step 1: MySQL writes the new row into the table.
+        Step 2: MySQL must also update EVERY index on that table.
+                It finds the correct position in each B-Tree and inserts
+                a new entry pointing to the new row.
+
+    When you UPDATE a row:
+        If the updated column is indexed:
+        Step 1: MySQL removes the old entry from the index.
+        Step 2: MySQL inserts a new entry at the correct position.
+        Step 3: MySQL updates the row in the table.
+
+    When you DELETE a row:
+        Step 1: MySQL removes the row from the table.
+        Step 2: MySQL removes the entry from every index.
+
+    The more indexes a table has, the more B-Trees MySQL must update
+    on every write operation.
+
+    Concrete example:
+        Table with 5 indexes: one INSERT = 1 table write + 5 index updates
+        Table with no indexes: one INSERT = 1 table write only
+
+    This is why the rule is:
+        Index columns you READ from often (WHERE, JOIN, ORDER BY).
+        Do NOT index columns on tables that are written to heavily
+        (e.g., a logging table with millions of inserts per hour).
+
+=======================================================
+WHEN TO USE AND WHEN TO AVOID INDEXES
+=======================================================
+
+    USE an index on:
+        - Columns used in WHERE clauses frequently
+          e.g., WHERE email = ? / WHERE status = 'active'
+        - Columns used in JOINs
+          e.g., ON orders.user_id = users.id  (index user_id in orders)
+        - Columns used in ORDER BY
+          e.g., ORDER BY created_at DESC
+        - Columns with high cardinality (many unique values)
+          e.g., email, phone -- almost every row has a different value
+          Index is most effective when it narrows results significantly.
+
+    AVOID an index on:
+        - Columns with low cardinality (few unique values)
+          e.g., gender (Male/Female/Others) -- index barely helps
+                MySQL might just do a full scan anyway since
+                half the table matches any given gender value
+        - Columns rarely used in WHERE, JOIN, or ORDER BY
+        - Tables with very few rows (full scan is fast anyway)
+        - Tables with very heavy write traffic (logs, event streams)
+        - Random columns "just in case" -- indexes cost disk space
+
+=======================================================
+DROPPING AN INDEX
+=======================================================
+
+    DROP INDEX idx_email ON users;
+
+    Removes the index only.
+    The table and its data are completely untouched.
+
+    You cannot drop the PRIMARY KEY index directly with DROP INDEX.
+    Use ALTER TABLE instead:
+    ALTER TABLE users DROP PRIMARY KEY;
+    (and remove AUTO_INCREMENT first if applicable -- covered in Keys notes)
+
+    Check what indexes exist before dropping:
+    SHOW INDEXES FROM users;
+
+=======================================================
+EXPLAIN -- see whether MySQL is using your index
+=======================================================
+
+    EXPLAIN SELECT * FROM users WHERE email = 'alice@gmail.com';
+
+    Prefix any SELECT with EXPLAIN to see MySQL's query execution plan.
+    This shows you exactly what MySQL is doing internally.
+
+    Key columns in EXPLAIN output:
+
+        type   -- how MySQL scans:
+                  ALL    = full table scan (bad for large tables)
+                  ref    = using an index (good)
+                  const  = single row via primary key (best)
+
+        key    -- which index MySQL chose to use (NULL = no index used)
+
+        rows   -- estimated number of rows MySQL will examine
+                  lower is better; 1,000,000 means full scan
+
+        Extra  -- additional info:
+                  "Using index"      = very efficient, data from index only
+                  "Using filesort"   = extra sort step, consider an index
+                  "Using where"      = filter applied after reading rows
+
+    Example output:
+        Without index on email:
+        type: ALL  | key: NULL       | rows: 1000000
+
+        With index on email:
+        type: ref  | key: idx_email  | rows: 1
+
+    EXPLAIN is the most useful tool for understanding and fixing slow queries.
+    Always use it when a query feels slow before adding an index.
+
+=======================================================
+QUICK REFERENCE
+=======================================================
+
+Task                              | Query
+------------------------------------------------------------------------------
+See all indexes on a table        | SHOW INDEXES FROM users;
+Create single column index        | CREATE INDEX idx_name ON users(column);
+Create composite index            | CREATE INDEX idx_name ON users(col1, col2);
+Create unique index               | CREATE UNIQUE INDEX idx_name ON users(column);
+Drop an index                     | DROP INDEX idx_name ON users;
+Check if index is being used      | EXPLAIN SELECT ...;
+
+When to index    : WHERE columns, JOIN columns, ORDER BY columns, high cardinality
+When NOT to index: low cardinality columns, write-heavy tables, rarely queried columns
+
+Leftmost prefix rule (composite indexes):
+    Index on (A, B, C) helps: WHERE A, WHERE A+B, WHERE A+B+C
+    Index on (A, B, C) does NOT help: WHERE B, WHERE C, WHERE B+C
+
+=======================================================

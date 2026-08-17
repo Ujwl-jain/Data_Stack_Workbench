@@ -1,0 +1,264 @@
+=======================================================
+SQL NOTES
+=======================================================
+
+-------------------------------------------------------
+REFERENCE TABLE (used throughout these notes)
+-------------------------------------------------------
+
+CREATE TABLE users (
+    id          INT           AUTO_INCREMENT PRIMARY KEY,
+    name        VARCHAR(100)  NOT NULL,
+    email       VARCHAR(100)  UNIQUE NOT NULL,
+    gender      ENUM('Male', 'Female', 'Others'),
+    dob         DATE,
+    is_active   BOOL          DEFAULT TRUE,
+    created_at  TIMESTAMP     DEFAULT CURRENT_TIMESTAMP
+);
+
+NOTE: AUTO_INCREMENT (not AUTO_INCREAMENT) - common typo to watch out for.
+
+=======================================================
+DATA TYPES
+=======================================================
+
+Let's understand each data type using the table above.
+
+-------------------------------------------------------
+1. INT
+-------------------------------------------------------
+
+    id INT AUTO_INCREMENT PRIMARY KEY
+
+    Column name : id
+    Data type   : INT
+                  Stores whole numbers (no decimals).
+                  Range: -2,147,483,648 to 2,147,483,647
+                  Use when you need IDs, counts, ages, quantities.
+
+    Constraints : AUTO_INCREMENT  -- MySQL auto-generates the next number
+                  PRIMARY KEY     -- uniquely identifies each row, no duplicates, no NULL
+
+    Other INT variants:
+        TINYINT    -- range: 0 to 255 (e.g., age)
+        SMALLINT   -- range: 0 to 65,535
+        BIGINT     -- range: very large numbers (e.g., phone numbers, row counts in big tables)
+
+-------------------------------------------------------
+2. VARCHAR(100)
+-------------------------------------------------------
+
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL
+
+    Column name : name, email
+    Data type   : VARCHAR(100)
+                  Stores variable-length text up to 100 characters.
+                  Only uses as much space as the actual string needs.
+                  e.g., "Alice" uses 5 bytes, not 100.
+
+    Constraints : NOT NULL   -- this column cannot be left empty
+                  UNIQUE     -- no two rows can have the same email
+
+    VARCHAR vs CHAR:
+        VARCHAR(100) -- flexible length, saves space (use for names, emails)
+        CHAR(10)     -- fixed length, always uses 10 bytes (use for codes like 'IN', 'US')
+
+-------------------------------------------------------
+3. ENUM
+-------------------------------------------------------
+
+    gender ENUM('Male', 'Female', 'Others')
+
+    Column name : gender
+    Data type   : ENUM('Male', 'Female', 'Others')
+                  Stores one value from a predefined list.
+                  If you try to insert a value not in the list, MySQL stores '' or raises an error.
+                  Internally stored as integers (1, 2, 3...) for efficiency.
+
+    Use when    : the column should only ever hold a fixed set of options.
+                  e.g., status ENUM('Active', 'Inactive', 'Banned')
+                        size   ENUM('S', 'M', 'L', 'XL')
+
+-------------------------------------------------------
+4. DATE
+-------------------------------------------------------
+
+    dob DATE
+
+    Column name : dob (date of birth)
+    Data type   : DATE
+                  Stores only the date -- no time component.
+                  Format: YYYY-MM-DD
+                  e.g., '1995-08-24'
+
+    Related types:
+        DATE      -- only date         e.g., '1995-08-24'
+        TIME      -- only time         e.g., '14:30:00'
+        DATETIME  -- date + time       e.g., '1995-08-24 14:30:00'  (no timezone)
+        TIMESTAMP -- date + time       e.g., '2024-01-01 09:00:00'  (timezone-aware, auto-updates)
+
+-------------------------------------------------------
+5. TIMESTAMP
+-------------------------------------------------------
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+    Column name : created_at
+    Data type   : TIMESTAMP
+                  Stores date + time together.
+                  Format: YYYY-MM-DD HH:MM:SS
+                  Range: 1970-01-01 to 2038-01-19 (use DATETIME for dates beyond this)
+
+    Constraint  : DEFAULT CURRENT_TIMESTAMP
+                  Automatically fills in the current date and time when a row is inserted.
+                  You don't need to provide a value -- MySQL handles it.
+
+    Bonus tip   : You can also add ON UPDATE CURRENT_TIMESTAMP
+                  to auto-update the time whenever the row is changed.
+                  e.g., updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+-------------------------------------------------------
+6. BOOL / BOOLEAN
+-------------------------------------------------------
+
+    is_active BOOL DEFAULT TRUE
+
+    Column name : is_active
+    Data type   : BOOL (also written as BOOLEAN)
+                  Stores TRUE or FALSE.
+                  MySQL internally stores this as TINYINT(1): 1 = TRUE, 0 = FALSE.
+
+    Constraint  : DEFAULT TRUE
+                  If no value is given during INSERT, the column automatically becomes TRUE.
+
+    Use when    : you need a simple yes/no flag.
+                  e.g., is_verified BOOL DEFAULT FALSE
+                        is_deleted   BOOL DEFAULT FALSE
+
+=======================================================
+CONSTRAINTS
+=======================================================
+
+Constraints are rules applied to a column to control what data is allowed.
+
+-------------------------------------------------------
+1. AUTO_INCREMENT
+-------------------------------------------------------
+
+    id INT AUTO_INCREMENT PRIMARY KEY
+
+    What it does : MySQL automatically assigns the next available integer
+                   when a new row is inserted. You don't provide this value manually.
+
+    Rule         : Can only be used on INT (or its variants).
+                   Only one AUTO_INCREMENT column allowed per table.
+
+    Example behavior:
+        INSERT INTO users (name, email) VALUES ('Alice', 'alice@mail.com');
+        -- id becomes 1 automatically
+
+        INSERT INTO users (name, email) VALUES ('Bob', 'bob@mail.com');
+        -- id becomes 2 automatically
+
+-------------------------------------------------------
+2. PRIMARY KEY
+-------------------------------------------------------
+
+    id INT AUTO_INCREMENT PRIMARY KEY
+
+    What it does : Uniquely identifies each row in the table.
+                   No two rows can have the same PRIMARY KEY value.
+                   A PRIMARY KEY column cannot be NULL.
+
+    Rule         : Each table should have exactly one PRIMARY KEY.
+                   It can be a single column or a combination of columns (composite key).
+
+    Why it matters: Other tables use this value to reference this row (via FOREIGN KEY).
+
+-------------------------------------------------------
+3. NOT NULL
+-------------------------------------------------------
+
+    name VARCHAR(100) NOT NULL
+
+    What it does : Prevents the column from being left empty.
+                   If you try to INSERT a row without providing this column, MySQL raises an error.
+
+    Use when     : the data is mandatory.
+                   e.g., a user must always have a name and email.
+
+-------------------------------------------------------
+4. UNIQUE
+-------------------------------------------------------
+
+    email VARCHAR(100) UNIQUE NOT NULL
+
+    What it does : Ensures no two rows have the same value in this column.
+                   Unlike PRIMARY KEY, a UNIQUE column can contain NULL
+                   (but only one NULL per column in most databases).
+
+    Difference from PRIMARY KEY:
+        PRIMARY KEY -- unique + not null + only one per table
+        UNIQUE      -- unique + allows null + can have multiple per table
+
+-------------------------------------------------------
+5. DEFAULT
+-------------------------------------------------------
+
+    is_active  BOOL      DEFAULT TRUE
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+    What it does : Provides a fallback value when no value is given during INSERT.
+                   MySQL uses the DEFAULT value automatically.
+
+    Use when     : most rows will share a common starting value.
+                   e.g., new users are active by default, created_at fills itself.
+
+-------------------------------------------------------
+6. FOREIGN KEY  (bonus -- commonly paired with PRIMARY KEY)
+-------------------------------------------------------
+
+    FOREIGN KEY (user_id) REFERENCES users(id)
+
+    What it does : Links a column in one table to the PRIMARY KEY of another table.
+                   Enforces referential integrity -- you cannot insert a value that
+                   doesn't exist in the referenced table.
+
+    Example:
+        CREATE TABLE orders (
+            order_id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id  INT NOT NULL,
+            amount   DECIMAL(10, 2),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
+        -- user_id must match an existing id in the users table.
+
+=======================================================
+QUICK REFERENCE SUMMARY
+=======================================================
+
+Data Type     | Use For                          | Example
+---------------------------------------------------------------------------
+INT           | Whole numbers, IDs, counts       | id INT
+VARCHAR(n)    | Variable text up to n chars      | name VARCHAR(100)
+CHAR(n)       | Fixed-length text                | country_code CHAR(2)
+ENUM(...)     | One value from a fixed list      | gender ENUM('M','F')
+DATE          | Date only (YYYY-MM-DD)           | dob DATE
+TIME          | Time only (HH:MM:SS)             | start_time TIME
+DATETIME      | Date + time, no timezone         | event_at DATETIME
+TIMESTAMP     | Date + time, timezone-aware      | created_at TIMESTAMP
+BOOL          | True / False flags               | is_active BOOL
+DECIMAL(p,s)  | Exact decimals (money etc.)      | price DECIMAL(10,2)
+TEXT          | Long text (no length limit)      | bio TEXT
+
+Constraint        | What it enforces
+-------------------------------------------------------
+AUTO_INCREMENT    | Auto-generates next integer value
+PRIMARY KEY       | Unique + Not Null + one per table
+NOT NULL          | Column must always have a value
+UNIQUE            | No duplicate values in column
+DEFAULT <value>   | Uses fallback if no value given
+FOREIGN KEY       | Links to PRIMARY KEY in another table
+
+=======================================================
