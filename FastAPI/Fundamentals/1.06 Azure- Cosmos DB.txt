@@ -1,0 +1,100 @@
+COSMOS DB - AZURE
+========================================
+
+WHAT IT IS
+----------------------------------------
+Another Azure resource for Semi-Structured data. Semi-structured data
+is also referred to as NoSQL data.
+
+NoSQL: "Not only SQL" - refers to non-relational data (i.e. data that
+doesn't have to follow the strict rows/columns/foreign-key structure
+of a traditional relational database).
+
+Cosmos DB is built to work with non-relational data.
+
+
+2 RECOMMENDED OPTIONS SHOWN WHEN SEARCHING "AZURE COSMOS DB"
+----------------------------------------
+1. Azure Cosmos DB for NoSQL (this was first called "Core (SQL) API",
+   also referred to as "Azure Cosmos DB Core API")
+2. Azure Cosmos DB for MongoDB
+
+These two are shown as the main recommended options because "for
+NoSQL" is Cosmos DB's own native/default API, and "for MongoDB" is the
+most commonly used option for teams migrating existing MongoDB
+workloads.
+
+OTHERS (brief explanation, as requested):
+- Azure Cosmos DB for PostgreSQL
+    A managed PostgreSQL-compatible option built on the Citus
+    extension, mainly used for relational/PostgreSQL workloads that
+    need to scale out horizontally.
+- Azure Cosmos DB for Apache Gremlin
+    Used for GRAPH data - i.e. data made up of nodes and the
+    relationships/edges between them (e.g. social networks,
+    recommendation engines).
+- Azure Cosmos DB for Apache Cassandra
+    Used for WIDE-COLUMN data, compatible with apps already built for
+    Apache Cassandra - good for high-write-throughput workloads.
+- Azure Cosmos DB for Table
+    A KEY-VALUE store, the direct successor/compatible option for
+    Azure Table Storage - simple lookups by a single key, no complex
+    querying needed.
+
+Note: once a Cosmos DB account is created with a particular API, that
+API cannot be changed later - so the API choice matters upfront.
+
+
+AZURE COSMOS DB FOR NOSQL (FORMERLY "CORE (SQL) API")
+----------------------------------------
+Correction: this API stores data as JSON DOCUMENTS, not plain simple
+key-value pairs (that "pure key-value" model is really what the
+Table API does, mentioned above). A document can be nested and hold
+much more structure than a basic key-value pair. Example:
+
+{
+  "id": "01",
+  "name": "Ujjwal"
+}
+
+Basically similar to how a dictionary works in Python, but at a much
+larger, distributed scale, and items can be deeply nested (objects
+inside objects, arrays, etc. - not just flat key-value pairs).
+
+This format is commonly used for:
+- Log creation/storage
+- Bigger applications, where each request/response for a page is
+  stored/exchanged in this JSON-like format
+
+Even though the language used to query it looks like SQL, it is not
+actually standard SQL - it's a SQL-like query language designed
+specifically for querying JSON documents.
+
+
+QUOTA LIMIT ISSUE (CLARIFICATION)
+----------------------------------------
+"Because of the quota limits we cannot create the DB account, showing
+an error regarding no permission on this location" - this is a known,
+common issue and here's what's actually happening:
+
+- Azure Free/Trial subscriptions (and some regular subscriptions) have
+  regional quota restrictions - meaning Microsoft limits which regions
+  you're allowed to deploy certain resources (including Cosmos DB) in,
+  based on your subscription type and current capacity in that region.
+- The error usually reads something like "your subscription doesn't
+  have access to resource provider in this location" or a quota/
+  capacity related permission error.
+- Fix: try creating the resource in a different, commonly-allowed
+  region (e.g. Central India, East US, West Europe are often open),
+  or request a quota increase via Azure support if you have a paid
+  subscription.
+
+Since there's a quota-limit issue in one resource, it's worth noting:
+Cosmos DB is not the only resource for semi/non-structured data - it's
+one option among others for handling this type of data on Azure.
+
+
+NOTE
+----------------------------------------
+These notes are for learning purposes only, covering what Cosmos DB
+can do at a conceptual level.

@@ -1,0 +1,127 @@
+SQL DB - AZURE
+========================================
+
+WHAT IT IS
+----------------------------------------
+A resource in Azure that lets you run and manage a SQL database on the
+cloud instead of on your own local machine/server.
+
+Correction: It is NOT "totally the same" as PostgreSQL, MySQL, etc.
+Azure SQL Database is built on the Microsoft SQL Server engine, so it
+uses T-SQL (Transact-SQL) syntax - the same syntax you'd use in SSMS
+(SQL Server Management Studio) on a local SQL Server install, NOT
+PostgreSQL or MySQL syntax.
+
+Note: If you specifically want PostgreSQL or MySQL on Azure, those
+exist as separate services - "Azure Database for PostgreSQL" and
+"Azure Database for MySQL" - they are not the same resource as
+"Azure SQL Database".
+
+
+CREATING THE RESOURCE - 3 OPTIONS
+----------------------------------------
+When creating a resource in Azure: search/select "Microsoft SQL" under
+Databases. 3 options are shown:
+
+1. SQL Virtual Machine
+    - Creates a full virtual machine with SQL Server installed on it.
+    - This is IaaS (Infrastructure as a Service) - you manage the OS,
+      updates, patching, etc. yourself.
+    - Best for: migrations, or applications that require OS-level
+      access/control.
+
+2. SQL Managed Instance
+    - This is PaaS (Platform as a Service) - Microsoft manages the
+      underlying infrastructure (OS upgrades, patching, backups, etc.)
+      for you.
+    - Near-full compatibility with traditional on-prem SQL Server, so
+      it's a good middle ground when migrating large/complex existing
+      SQL Server systems without redesigning them.
+
+3. SQL Database (Azure SQL Database)
+    - Also PaaS - no need to worry about OS/system-level management.
+    - Very popular for building new, cloud-native applications and for
+      practicing/learning on the cloud.
+
+Correction: the "no need to worry about OS upgrades/system management"
+point applies to BOTH option 2 (Managed Instance) and option 3 (SQL
+Database), since both are PaaS - it isn't unique to just one of them.
+
+
+SETUP STEPS (SAME FOR THESE OPTIONS)
+----------------------------------------
+After choosing the option, the setup flow is generally:
+    - Choose Database name
+    - Choose/create Server
+    - Choose Authentication method
+    - Set Admin ID and Password
+    - Configure Connectivity method (see below)
+
+
+CONNECTIVITY METHOD - WHAT EACH ONE MEANS
+----------------------------------------
+1. Public endpoint
+    - The database can be reached over the public internet.
+    - Access is still controlled using firewall rules (IP allow-list),
+      such as "Add current client IP address".
+
+2. Private endpoint
+    - The database is only reachable through a private IP address
+      inside your Azure Virtual Network (using Azure Private Link).
+    - It is NOT exposed to the public internet at all - more secure,
+      typically used in production/enterprise setups.
+
+3. No Access
+    - This is actually the default connectivity setting.
+    - It means: only connections through a Private Endpoint are
+      allowed. All public endpoint connections are denied by default,
+      until you either configure a private endpoint or explicitly
+      enable public network access with firewall rules.
+
+
+BACKUP STORAGE REDUNDANCY
+----------------------------------------
+An option to look at while creating the DB - controls how your backups
+are replicated for durability:
+    LRS  - Locally Redundant Storage (copies within one datacenter)
+    ZRS  - Zone Redundant Storage (copies across availability zones in
+           the same region)
+    GRS  - Geo Redundant Storage (copies to a secondary, distant
+           region)
+    GZRS - Geo-Zone Redundant Storage (combination of ZRS + GRS -
+           zone redundancy in primary region + geo replication)
+
+
+NETWORKING CHECKBOXES DURING SETUP
+----------------------------------------
+- "Allow Azure services and resources to access this server" (Yes/No)
+    - If Yes, other Azure services (e.g. Azure Data Factory, App
+      Service) can connect to this database without needing a
+      separate firewall rule.
+- "Add current client IP address"
+    - Adds a firewall rule allowing your own current machine's public
+      IP to connect - useful for testing/connecting from your laptop.
+
+
+HOW TO ACCESS THE DB AFTER CREATION
+----------------------------------------
+1. Azure Data Studio
+    - A dedicated desktop tool (similar to SSMS) for connecting to and
+      querying Azure SQL databases.
+
+2. Query editor (in the Azure Portal)
+    - Built into the Azure Portal itself - log in with your admin
+      credentials and run queries directly in the browser, no separate
+      tool needed.
+
+Additional (missing) option: SQL Server Management Studio (SSMS)
+    - The traditional desktop tool most SQL Server users are already
+      familiar with; can also connect to Azure SQL Database.
+
+SYNTAX USED
+----------------------------------------
+T-SQL (Transact-SQL) - Microsoft's SQL dialect, same as used in SSMS
+and on-prem SQL Server. It is NOT PostgreSQL syntax and NOT MySQL
+syntax.
+
+Enjoy performing SQL on the cloud.

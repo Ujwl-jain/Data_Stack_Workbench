@@ -1,0 +1,89 @@
+CLOUD COMPUTING - NOTES
+========================================
+
+1. WHAT IS CLOUD?
+----------------------------------------
+Cloud is a central location to store data, accessible over the internet.
+
+Why it exists:
+- Without cloud, your data is tied to one device (e.g. your own laptop).
+  If that laptop is not with you, you cannot access your data.
+- Since internet access is now everywhere, cloud lets you store data in
+  a remote location and access it from any device, anywhere.
+  Example: Google Drive is a cloud storage service.
+
+Think of "the cloud" as a vast network of internet-connected storage
+and computing resources.
+
+Important: Cloud is NOT limited to just storing data. Storage is only
+one part of it.
+
+
+2. WHAT IS CLOUD COMPUTING?
+----------------------------------------
+Cloud computing = renting a virtual machine (VM) that can do everything
+a local machine can do - video editing, running SQL, coding, etc.
+
+A cloud provider gives you the same resources a local system would have:
+    - Processor (CPU)
+    - RAM
+    - Operating System (e.g. Windows/Linux)
+    - Storage
+    - Software
+    - A full working environment
+
+The difference: you PAY for these resources, and you are effectively
+RENTING them instead of owning them.
+
+Biggest advantage:
+    - You don't need to buy a whole system.
+    - A cloud provider can set one up for you and you rent it for as
+      little as 1-2 months (or even hours).
+    - This makes it highly cost-efficient compared to buying hardware
+      outright.
+
+Note: "Azure" and "cloud" are sometimes used interchangeably in casual
+conversation, since Azure is one of the major cloud platforms - but
+Azure is a specific provider, not the concept of cloud itself.
+
+
+3. WHY IS CLOUD SO BENEFICIAL FOR COMPANIES? (EXAMPLE)
+----------------------------------------
+Scenario without cloud:
+    - A company needs 50 laptops for development work.
+    - In Quarter 1, only 20 laptops are actually used
+      -> 30 laptops sit idle = wasted cost.
+    - In Quarter 2, demand rises to 80 laptops
+      -> Company has to buy 30 MORE laptops urgently.
+    - Result: wasted spend in Q1, scramble and extra cost in Q2.
+
+Scenario with cloud:
+    - Instead of buying hardware, the company rents 50 virtual
+      machines from a cloud provider with the required configuration.
+    - Machines can be PAUSED when not needed and RESUMED when needed.
+    - Company only pays for what it actually uses, when it uses it.
+    - Result: flexible, scalable, and cost-efficient.
+
+
+4. HOW DO CLOUD PROVIDERS OFFER THESE MACHINES?
+----------------------------------------
+Through DATA CENTERS.
+
+Popular cloud providers: Azure, AWS, GCP
+    - These are the major cloud computing providers.
+    - Each operates large data centers containing physical servers.
+
+How it works, step by step:
+    1. Cloud provider owns data centers full of physical/remote servers.
+    2. These servers are configured according to what the customer
+       (renter) requests (CPU, RAM, OS, storage, etc.).
+    3. The provider exposes access to these configured servers (virtual
+       machines) through ENDPOINTS.
+    4. The customer connects to these endpoints over the INTERNET to
+       use the virtual machine remotely.
+
+
+5. CONCLUSION
+----------------------------------------
+Cloud providers deliver computing resources ON-DEMAND - you get exactly
+what you need, exactly when you need it, and pay only for that.

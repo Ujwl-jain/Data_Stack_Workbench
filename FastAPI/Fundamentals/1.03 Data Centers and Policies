@@ -1,0 +1,182 @@
+AZURE REGIONS, AVAILABILITY ZONES & STORAGE REDUNDANCY
+========================================
+
+1. DATA CENTERS
+----------------------------------------
+A Data Center is a physical facility containing servers, networking
+equipment, power, cooling, and other infrastructure used to run cloud
+services.
+
+Let's say 1 data center is down due to a particular circumstance, like
+a natural disaster:
+
+
+2. AVAILABILITY ZONE (AZ)
+----------------------------------------
+An Availability Zone is a physically separate location within an Azure
+Region, designed with independent power, cooling, and networking.
+
+- One Region can have multiple Availability Zones.
+- If one Availability Zone fails, workloads in another zone can
+  continue running.
+- Example: Region A -> Zone A, Zone B, Zone C.
+
+Missing point: Not every Azure Region supports Availability Zones.
+Only certain regions (mostly larger/newer ones) are "AZ-enabled" -
+some regions only have a single datacenter setup with no zones.
+
+
+3. REGION
+----------------------------------------
+An Azure Region is a geographical area containing one or more
+Availability Zones and Azure data centers.
+
+- Example: Region A -> Zone A + Zone B + Zone C.
+- Different regions are geographically separated.
+
+
+4. REGION PAIRS
+----------------------------------------
+Azure pairs certain regions within the same geography to improve
+disaster recovery and business continuity.
+
+- Region A <-> Region B
+- If a major disaster affects one region, services/data can
+  potentially be recovered from the paired region.
+- Region pairs provide protection at a regional level, beyond what
+  Availability Zones provide.
+
+Correction/update: Not all Azure regions are paired anymore. Region
+pairing was Azure's original model, but many newer regions are
+launched WITHOUT a designated pair (they rely on Availability Zones
+within the region instead). So "region pairs" apply to older/certain
+regions, not universally to every region today.
+
+
+AVAILABILITY - WHY UP TO 99.99%
+----------------------------------------
+Layered protection: Multiple Data Centers -> Availability Zone ->
+Multiple Zones -> Region -> Region Pair
+
+- Data Center failure -> Other infrastructure can continue
+- Availability Zone failure -> Other zones can continue
+- Region failure -> Paired region can provide disaster-recovery
+  capability
+
+Note: the 99.99% figure specifically refers to the SLA achievable when
+a resource (e.g. a Virtual Machine) is deployed across 2 or more
+Availability Zones. A single VM on premium storage typically gets
+99.9%; using Availability Zones raises that to 99.99%. It is not a
+number that applies automatically to every Azure service.
+
+
+----------------------------------------------
+REPLICATION SETTINGS (CALLED "POLICIES" HERE)
+----------------------------------------------
+These work like insurance for the business - a customer only pays for
+the level of protection they choose:
+
+1. If the user wants their data/system protected up to zone level, so
+   Azure only replicates data up to zone level.
+2. If the user wants their data/system protected up to region level,
+   so Azure replicates data up to region level.
+
+The user pays according to the level of protection ("policy")
+selected.
+
+Terminology note: Azure does not officially call this a "policy" - the
+official term is "redundancy option" or "replication setting" (chosen
+when creating a storage account: LRS/ZRS/GRS/GZRS). The concept you've
+described is correct, just worth knowing the official name for exam
+purposes.
+
+
+------
+AZURE STORAGE REDUNDANCY OPTIONS
+------
+Azure provides different storage redundancy options to maintain
+multiple copies of data and protect it from hardware, data-center,
+zone, or regional failures.
+
+--
+1. LRS - Locally Redundant Storage
+
+Three copies of data are maintained within a single physical
+location/data center in the primary region. It is the lowest-cost
+redundancy option and protects mainly against local hardware/storage
+failures.
+
+1 Data Center -> 3 Copies: replication of the data within the same
+data center/location.
+
+--
+2. ZRS - Zone Redundant Storage
+
+3 copies of data are synchronously replicated across multiple
+Availability Zones within the same Azure Region. If one zone becomes
+unavailable, the data remains available from another zone.
+
+Simple: 1 Region -> 3 Availability Zones -> 1 Copy in each Zone. A
+zone consists of one or more physically separate data centers with
+independent power, cooling, and networking.
+
+--
+3. GRS - Geo-Redundant Storage
+
+Data is stored using LRS in the primary region and asynchronously
+replicated to another geographically separated secondary region. This
+protects against a regional failure.
+
+Simple:
+Primary Region -> LRS -> 3 Copies
+    -> Asynchronous Geo-Replication
+Secondary Region -> LRS -> 3 Copies
+
+The secondary copy is not directly readable by the user. Read access
+to the secondary is available with RA-GRS (Read-Access GRS).
+
+Missing point: because replication to the secondary region is
+ASYNCHRONOUS, there is a small possible data-loss window if the
+primary region fails before the latest writes are copied over (this
+is measured as RPO - Recovery Point Objective, typically minutes).
+Also, failing over to the secondary region with plain GRS is a
+Microsoft-managed process during a major outage, or can be a
+customer-initiated account failover.
+
+--
+4. GZRS - Geo-Zone-Redundant Storage
+
+Data is synchronously replicated across Availability Zones in the
+primary region and asynchronously replicated to a secondary region. It
+combines zone-level protection + regional protection.
+
+Simple:
+Primary Region -> ZRS -> Multiple Availability Zones
+    -> Asynchronous Geo-Replication
+Secondary Region -> LRS -> 3 Copies
+
+GZRS provides the highest level of redundancy among these four
+options, but generally at a higher cost. Read access to the secondary
+region requires RA-GZRS.
+
+--
+THE EASIEST WAY TO REMEMBER:
+
+LRS: Same location
+ZRS: Different zones, same region
+GRS: Different regions
+GZRS: Different zones + different region
+
+Or:
+
+LRS -> Local protection
+ZRS -> Zone protection
+GRS -> Regional protection
+GZRS -> Zone + Regional protection
+
+COST / PROTECTION IDEA
+
+LRS -> Cheapest -> Least redundancy
+ZRS -> More expensive -> Zone failure protection
+GRS -> More expensive -> Regional failure protection
+GZRS -> Highest among these -> Zone + regional failure protection

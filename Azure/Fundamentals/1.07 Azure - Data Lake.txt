@@ -1,0 +1,198 @@
+AZURE STORAGE ACCOUNT (SEMI + UNSTRUCTURED DATA, DATA LAKE)
+========================================
+
+OVERVIEW
+----------------------------------------
+Here we learn about a resource that handles both semi-structured and
+unstructured data - this same resource also handles Data Lake needs.
+
+
+UNSTRUCTURED DATA - WHERE IT'S STORED
+----------------------------------------
+Correction/clarification: your three terms (blocks, blobs, files) were
+mixing two different ideas - blob TYPES and storage account SERVICES.
+Here's the accurate breakdown:
+
+Within Blob storage, there are 3 types of blobs:
+- Block blobs: the standard type, used for storing text/binary data
+  (documents, images, CSVs, etc.) in "blocks" - this is the most
+  common blob type and what people usually mean by "Blob storage".
+- Page blobs: optimized for random read/write - this is what actually
+  backs Virtual Machine disks (a "hard disk" style use case), not
+  block blobs.
+- Append blobs: optimized for append-only operations, like log files.
+
+blobs: is the foundation of Azure Data Lake (and data lakes in
+general) - a data lake is built on top of Blob storage.
+
+files: refers to Azure Files (File Shares) - a separate storage
+account service that gives you an SMB/NFS network file share, which
+can be mounted like a shared network drive across multiple machines.
+It is NOT the same as your local C: drive - it's a cloud-hosted
+network share.
+
+
+THE RESOURCE
+----------------------------------------
+Resource is called: Azure Storage Account. It will also create Azure
+Blob Storage by default.
+
+Settings to pick during creation:
+1. Storage account name
+2. Redundancy: LRS, GRS, ZRS, GZRS, etc.
+
+3. Check the box "Enable hierarchical namespace" to create a Data
+   Lake: if enabled, you can actually create folders and sub-folders
+   inside Blob storage - that structured folder hierarchy is what
+   makes it a Data Lake (specifically, Azure Data Lake Storage Gen2).
+
+   Without Hierarchical Namespace:
+   Container -> blob storage (flat structure)
+
+   With Hierarchical Namespace:
+   Container -> blob storage -> Folders -> their sub-folders -> so on
+   (that's the data lake)
+
+4. Access tier: Hot, Cool, Cold - and a 4th tier you were missing:
+   Archive.
+
+   - Hot: pick this if you're accessing the data very frequently.
+     Highest storage cost, cheapest to read/write.
+   - Cool: pick this if you store data and read it occasionally
+     (minimum retention ~30 days). Cheaper storage than Hot, but
+     costs more per read/write operation.
+   - Cold: pick this if data is rarely accessed but still needs to
+     stay online and be readable INSTANTLY when needed (minimum
+     retention ~90 days). Cheaper than Cool.
+   - Archive (missing from your notes): pick this for data you
+     essentially never access - like true long-term/compliance
+     archives - kept for a year or more. This is the CHEAPEST tier
+     overall, not Cold. The trade-off: data is offline, so retrieving
+     it back takes hours (a "rehydration" process), not instant.
+
+   Correction: you had written that Cold is "the most cheapest" for
+   data untouched for a year+ - Archive is actually the cheapest and
+   the correct tier for that specific "don't touch for a year+"
+   use case. Cold is the middle ground - cheaper than Cool, but still
+   instantly readable (no rehydration wait), which Archive doesn't
+   offer.
+
+5. Enable large file shares (auto-checked): this setting specifically
+   applies to Azure Files (file shares), allowing shares to scale up
+   to much larger sizes (up to 100 TiB) - not related to blobs.
+
+6. Networking: enable public access from all networks, or disable it
+   if the data is sensitive - in which case you'll need to create a
+   private endpoint (same private endpoint concept used for Azure SQL
+   DB).
+
+7. Review and create: done.
+
+
+INSIDE THE STORAGE ACCOUNT RESOURCE
+----------------------------------------
+1. Container (Blob storage / your Data Lake)
+   - This is your data lake, if hierarchical namespace was enabled.
+   - If you only see "Blob storage" instead of folder-capable
+     containers, it means hierarchical namespace wasn't enabled.
+   - Create containers and name them - private/secured by Azure by
+     default.
+   - After creating a container, you'll see the option to add a
+     directory/folder and upload files directly into it - no need to
+     worry about tables or schema, since it's a plain file upload
+     (e.g. a CSV stays a CSV) - just like uploading to a drive.
+
+2. File share
+   - A kind of central, shared repository for files - mountable like a
+     network drive, can be used to upload/access any kind of data from
+     multiple machines at once.
+
+3. Queues (left unexplained in your notes - filling this in)
+   - Azure Queue Storage: used for storing and passing large numbers
+     of small messages between different parts of an application, for
+     asynchronous communication - e.g. a web app adds a "process this
+     order" message to a queue, and a separate background service
+     picks it up and processes it later. Useful for decoupling and
+     smoothing out spikes in workload.
+
+4. Tables
+   - A way to deal with semi-structured data.
+   - Create the "Table" option and it just creates the table - but it
+     is NOT a normal SQL table, more like a NoSQL table.
+   - You can't click into/open it directly in that view - to access
+     it, go to the Storage Browser, and from there click into the
+     table.
+
+Scaling for unstructured data is essentially near-infinite.
+
+A typical table looks like:
+
+PartitionKey  RowKey  Timestamp
+
+Example:
+PartitionKey | RowKey | Timestamp            | amount | subcat  | quantity | customer
+-------------|--------|----------------------|--------|---------|----------|---------
+food         | 1      | 2025-03-08T12:35:15Z | 10     | noodles |          |
+food         | 2      | 2025-03-08T12:36:09Z | 15     |         | 2        |
+food         | 3      | 2025-03-08T12:37:21Z |        | pizza   | 1        | Rahul
+drink        | 4      | 2025-03-08T12:40:45Z | 20     | juice   |          |
+snacks       | 5      | 2025-03-08T12:45:10Z | 30     | chips   | 3        | Priya
+
+- Partition Key: the main grouping key - think of it like a category.
+- Row Key: the unique identifier within each partition.
+- The true "primary key" of the table is the COMBINATION of
+  PartitionKey + RowKey, since that combination must be unique.
+- Timestamp: when the data was added - managed by Azure automatically.
+
+
+ADDING ENTITIES (ROWS)
+----------------------------------------
+Simple method: add the PartitionKey and RowKey, and if needed, add
+another property (another column) along with its data type. You do
+NOT need to fill in every property for every row, since this is
+unstructured/schemaless.
+
+Example:
+PartitionKey | RowKey | Timestamp            | amount | subcat  | quantity | customer
+-------------|--------|----------------------|--------|---------|----------|---------
+food         | 1      | 2025-03-08T12:35:15Z | 10     | noodles |          |
+food         | 2      | 2025-03-08T12:36:09Z | 15     |         | 2        |
+
+Null values also exist in SQL - but here, you can also stop filling a
+previously-added column/property for future rows and the row will
+still upload fine (e.g. skip "amount" going forward, fill everything
+else, and it uploads with amount shown as null).
+
+That's the NoSQL nature of it - no need to worry about a fixed schema.
+Even after adding a brand-new column for a new row, older existing
+rows simply show null for that new column - it doesn't break anything.
+
+2 RULES:
+1. RowKey must be unique within each partition (e.g. two rows in the
+   "food" partition can't both have RowKey = 1).
+2. The combination of PartitionKey + RowKey must be unique across the
+   whole table.
+
+That's it - insert any data, any column, any type, etc.
+
+
+COSMOS DB vs AZURE TABLE STORAGE
+----------------------------------------
+The fundamentals of Cosmos DB and Azure Table storage are mostly the
+same, but with an important nuance:
+
+- Azure Cosmos DB for Table (the API): actually DOES use
+  PartitionKey + RowKey, same as Table storage - it's essentially a
+  premium, globally-distributed version of Table storage.
+- Azure Cosmos DB for NoSQL (the document API): this is the one that
+  is genuinely different - it does NOT have a RowKey. Instead each
+  item just has a unique "id" field plus a partition key property you
+  define, and it stores full JSON objects (nested data, arrays,
+  objects-within-objects) rather than flat rows of properties. This is
+  what works similarly to MongoDB/NoSQL document databases.
+
+For filtering/querying data:
+- Table storage: you use a basic Filter option in the portal to fetch
+  data.
+- Cosmos DB: you can write actual (SQL-like) queries to fetch data,
+  which is more powerful/flexible than the Table storage filter UI.

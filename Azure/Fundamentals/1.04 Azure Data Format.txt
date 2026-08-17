@@ -1,0 +1,53 @@
+DATA FORMATS - NOTES
+========================================
+
+1. STRUCTURED DATA
+----------------------------------------
+Data that is organized in a proper, fixed, predefined format (rows and
+columns) - very popular before and after cloud.
+
+Example: SQL Tables (relational databases)
+
+Additional points:
+    - Follows a strict schema (fixed columns, fixed data types).
+    - Easy to search, query, and analyze (e.g. using SQL).
+    - Other examples: Excel spreadsheets, CSV files.
+
+
+2. SEMI-STRUCTURED DATA
+----------------------------------------
+Data that has some organization but does not fit strictly into rows
+and columns - it uses key-value pairs.
+
+Example: JSON data. Most logs are stored in this format.
+
+Additional points:
+    - Does not require a fixed schema like structured data, but still
+      has tags/markers that separate elements (making it easier to
+      parse than fully unstructured data).
+    - Other common examples: XML files, YAML files.
+
+
+3. UNSTRUCTURED DATA
+----------------------------------------
+Data that has no predefined format or organization.
+
+Correction/clarification: Unstructured data is not something that
+exists only "because of AI" - it has always existed (images, audio,
+video, PDFs, text documents, emails, social media posts, etc.). What
+has changed is that AI (especially generative AI, like text-to-image
+tools) has made unstructured data far more useful and widely used,
+since AI models are good at processing this type of data.
+
+How AI works with it: AI models convert unstructured data into VECTOR
+DATA (numerical representations called embeddings) so that data can be
+compared, searched, and used to generate responses to a user's query.
+This is why vector databases have become popular alongside AI tools.
+
+
+4. AZURE AND DATA FORMATS
+----------------------------------------
+Azure supports and provides services for all three data formats:
+    - Structured data: Azure SQL Database
+    - Semi-structured data: Azure Cosmos DB
+    - Unstructured data: Azure Blob Storage, Azure AI/Vector Search
