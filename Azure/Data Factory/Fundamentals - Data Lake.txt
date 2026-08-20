@@ -1,0 +1,106 @@
+DATA FACTORY - DATA LAKE, LINKED SERVICES & DATASETS
+========================================
+
+DATA LAKE (VIA DATA FACTORY + STORAGE ACCOUNT)
+----------------------------------------
+Do account creation for BOTH Azure Data Factory and a Data Storage
+account (specifically enable Hierarchical Namespace on the storage
+account). By creating the storage account with "Enable hierarchical
+namespace" ticked, the Data Lake is ready.
+
+
+STEPS FOR CREATING CONTAINERS, DIRECTORY, AND ADDING A FILE
+----------------------------------------
+1. Create an Azure Storage Account.
+2. Enable Hierarchical Namespace (HNS) during creation.
+3. Open the created Storage Account.
+4. Go to Data storage -> Containers.
+5. Click "+ Container".
+6. Enter the container name, e.g. raw-data.
+7. Keep Anonymous access level = Private.
+8. Click Create.
+9. Open the raw-data container.
+10. Click "+ Add Directory".
+11. Enter the directory name, e.g. customers.
+12. Click Save.
+13. Open the customers directory.
+14. Click Upload.
+15. Select the file from your computer.
+16. Click Upload.
+
+Note on step 7 (context, not a correction): "Private" is the safest
+and default access level - the other two options are "Blob"
+(anonymous read access to individual blobs only, not the container
+listing) and "Container" (anonymous read access to the container
+listing AND its blobs). For a data lake holding real data, Private is
+almost always the right choice unless you specifically intend to
+serve public files.
+
+
+----------------------------------------------
+LINKED SERVICES & DATASET
+----------------------------------------------
+
+DIAGRAM DESCRIPTION (recreated in text form for the GitHub .txt notes,
+based on the original hand-drawn diagram):
+
+    SQL (SOURCE)                    ADF                    DESTINATION
+                                                             (Data Lake)
+        |                            |                          ^
+        |------- Connection -------->|                          |
+        |                            |------- ETL/ELT --------->|
+        |                                    pipeline
+        |                          (Same dataset flows through
+        |                           ADF to reach the destination)
+        v
+    Copy from the source:
+      -> Table 1
+      -> Table 2
+      -> View 1
+      -> View 3
+
+    Datasets = which data is to be picked, e.g. "Table 1" is chosen
+    -> that selection becomes your Dataset.
+
+(Reading it as a flow: SQL Source --Connection--> ADF --pipeline-->
+Destination/Data Lake. The source side lists everything available to
+copy from - Table 1, Table 2, View 1, View 3 - and the Dataset is
+whichever one of those you actually select to move.)
+
+
+EXPLANATION
+----------------------------------------
+From the diagram: ADF is the MEDIATOR between Source and Destination.
+It has a connection to external or internal servers/storage, and that
+connection is called a Linked Service.
+
+Through that connection, WHAT data is to be picked from the source is
+your Dataset - which then gets migrated to the destination using
+ETL/ELT pipelines built in ADF.
+
+- Source can be anything: SQL Server, an API, an internal Azure
+  folder, etc.
+- Destination can be anything: Data Lake (Data Storage), SQL DB, etc.
+
+Clarification/addition: "Same dataset will go to the destination
+passing through ADF" - to be precise, in ADF you actually define TWO
+separate Dataset objects for a Copy Activity: a SOURCE dataset
+(pointing to the SQL table/view) and a SINK/destination dataset
+(pointing to where it lands in the Data Lake). They represent the same
+underlying DATA conceptually, but technically they are two distinct
+Dataset objects in ADF, each pointing to its own Linked Service.
+
+Quick relationship to remember:
+    Linked Service = the CONNECTION (like a login/connection string to
+                      a server or storage account)
+    Dataset        = the SPECIFIC DATA within that connection (a
+                      particular table, view, file, or folder)
+    Pipeline        = the workflow that uses a source Dataset + a
+                      destination Dataset to actually move/transform
+                      the data (via a Copy Activity or Data Flow)
+
+Before starting to build in Azure Data Factory, start by creating the
+containers in Data Storage, which are hierarchical in nature (thanks
+to Hierarchical Namespace being enabled) - so the destination
+structure is ready before you build the pipeline that lands data into
+it.
