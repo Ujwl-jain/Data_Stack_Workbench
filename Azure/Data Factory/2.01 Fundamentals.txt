@@ -1,0 +1,241 @@
+AZURE DATA FACTORY - CORE CONCEPTS
+========================================
+
+1. WHAT IS AZURE DATA FACTORY?
+----------------------------------------
+ADF is a cloud-based data integration and data orchestration service.
+It is used to migrate data from a source to a destination - that's
+when Azure Data Factory comes in handy, using ETL/ELT pipelines. It
+has connectors for pretty much any source (SQL servers, CSV files,
+APIs, etc.) and any destination (Azure Data Lake, Azure SQL, AWS S3,
+etc.).
+
+ADF itself is mainly responsible for COORDINATING and MOVING data. It
+does NOT mean ADF is the place where all your data is stored.
+
+Example flow:
+SQL Server -> Azure Data Factory -> Data Lake Storage -> Power BI /
+Databricks / SQL Database
+
+Think of ADF as a transport manager / factory manager:
+- It knows where the data is
+- It knows where the data needs to go
+- It knows what operations need to happen
+- It decides when the operations should happen
+- It monitors whether the process succeeded or failed
+
+Go to: portal.azure.com
+
+2 important resources: Azure Data Factory, and Azure Data Lake (which
+lives inside Azure Data Storage).
+
+
+DIAGRAM (from the whiteboard image, recreated in text for these notes
+- placed here at the end of Point 1, as requested):
+
+                    WHAT IS AZURE DATA FACTORY?
+
+    SOURCE                    ETL/ELT                   DESTINATION
+   -------                   ---------                  -----------
+   SQL DB          -->    [Data Factory]      -->      Azure Data Lake
+   CSV files               Connectors                  S3
+   API                     Data Flows                  Azure SQL
+   HTTP                                                 Dataverse
+
+Reading it left to right: data starts at any SOURCE (SQL DB, CSV
+files, an API, or a raw HTTP endpoint) -> flows through ADF's
+ETL/ELT engine (using Connectors to reach each system, and Data Flows
+to transform the data) -> lands in a DESTINATION (Azure Data Lake,
+AWS S3, Azure SQL, or Dataverse).
+
+
+2. WHAT IS AN ETL/ELT PIPELINE?
+----------------------------------------
+E: EXTRACT - pulling data out from the source
+L: LOAD - pushing data into the destination
+T: TRANSFORM - handled by something called Data Flows; behind the
+   scenes, Data Flows actually run on Spark clusters.
+
+
+2.1 ETL: Source -> Extract -> Transform -> Load -> Destination
+----------------------------------------
+Example: let's say we want to build an ETL pipeline using this table:
+
+Customer_ID | Name  | Country | Salary
+------------|-------|---------|-------
+101         | Rahul | India   | 50000
+102         | Amit  | India   | 60000
+103         | John  | USA     | 70000
+
+Extract: Source (SQL Server) - where the data will be extracted from.
+
+Transform: produces clean data using transformation methods like:
+- Remove duplicate customers
+- Convert salary from string to number
+- Rename columns
+- Filter inactive customers
+- Join customer information with another table
+
+Load: the clean, transformed data gets stored into a data warehouse -
+whether that's a different table or a new destination entirely.
+
+This entire process is called an ETL pipeline.
+
+
+2.2 ELT: Source -> Extract -> Load -> Transform -> Final data
+----------------------------------------
+This approach is more common in cloud computing, because cloud
+storage can store huge amounts of raw data relatively cheaply.
+Instead of transforming everything before storing it, we first
+preserve the original (raw) data as-is, and transform it later, closer
+to when it's actually needed.
+
+Example:
+SQL Server -> extract -> store it into Data Lake (raw) -> transform
+directly (producing the final, ready-to-use data)
+
+(Note: the original line trailed off mid-sentence - "transform
+directly into i" - completed above based on context: raw data gets
+stored first, then transformed afterward into its final usable form.)
+
+
+2.3 HOW DOES A PIPELINE WORK BEHIND THE SCENES?
+----------------------------------------
+ADF needs information about the systems involved - like SQL Server
+credentials, API connection details, and so on. It uses Linked
+Services to connect with each external system.
+
+For example:
+SQL Server -> Connection information
+Azure Data Lake -> Connection information
+
+                     Azure Data Factory
+                            |
+                  +---------+---------+
+                  v                   v
+            Linked Service      Linked Service
+                  v                   v
+              SQL Server        Azure Storage
+                  |                   |
+                  +---------+---------+
+                            v
+                        Pipeline
+                            v
+                       Data Movement
+
+Pipelines contain Activities that tell ADF what to do. ADF acts as an
+orchestrator, coordinating the work across all connected systems.
+
+
+3. WHERE DOES THE DATA GO?
+----------------------------------------
+Azure does not have a resource literally called "Data Lake" - it has
+Azure Data Storage. Inside that, there's something called Blob
+Storage. With the right config settings enabled, you get Azure Data
+Lake Storage Gen2 - which is an Azure Storage service/capability built
+ON TOP OF Azure Blob Storage.
+
+Conceptually:
+Azure Storage Account contains Data Lake Storage Gen2, where 3 things
+exist: Containers, Directories, Files.
+
+
+3.1 HOW DO WE USE A DATA LAKE INSIDE AZURE STORAGE?
+----------------------------------------
+Resource: Data Storage Account, where you enable/use Hierarchical
+Namespace (HNS) to get Azure Data Lake Storage Gen2 behavior - where
+you can create containers, and inside those containers, organize
+files/folders.
+
+    Azure
+      |
+      +-- Storage Account
+              |
+              +-- Hierarchical Namespace = Enabled
+                        |
+                        v
+                Data Lake Storage Gen2
+
+
+3.2 BLOB STORAGE vs HIERARCHICAL STORAGE
+----------------------------------------
+The difference, simply: Blob uses containers (flat), and Data Lake
+uses hierarchical folders - storing folders inside folders.
+
+Blob Storage: used to store unstructured data like CSV, JSON, Images,
+Videos, etc. This is the primary/default setting of Azure Data
+Storage.
+
+Basic example: Storage account -> Containers -> Blobs (CSV, JSON,
+etc. kind of files)
+
+Hierarchical Namespace:
+Normally, Blob Storage works with a FLAT object-storage structure -
+something like a container where folder1/one.csv, folder2/two.csv,
+folder1/two.csv exist, where "folder" is really just part of the
+filename/path in a flat namespace, not a real nested folder.
+
+But with Hierarchical Namespace enabled, the storage system
+understands directories and files as an actual hierarchy, like:
+
+    Container
+        |
+        +-- sales
+        |     +-- 2026
+        |          +-- January
+        |          +-- February
+        |
+        +-- customers
+              +-- India
+              +-- USA
+
+Comparison table:
+
+Feature                          | Blob Storage | Data Lake Gen2
+----------------------------------|--------------|----------------
+Store files/objects               | Yes          | Yes
+Containers                        | Yes          | Yes
+CSV/JSON/Parquet                  | Yes          | Yes
+Large-scale storage                | Yes          | Yes
+Hierarchical Namespace             | No           | Yes
+Real directory structure           | Limited/virtual folders | Yes
+Big-data analytics                 | Supported    | Optimized
+Fine-grained directory/file access | More limited | Better suited
+Common data-engineering use        | General object storage | Data lakes / analytics
+
+
+4. A TYPICAL AZURE DATA ENGINEER ARCHITECTURE
+----------------------------------------
+                        SOURCE
+                          |
+                +---------+---------+
+                |                   |
+            SQL Server           REST API
+                |                   |
+                +---------+---------+
+                          v
+                Azure Data Factory
+                          |
+                     Copy Activity
+                          v
+               Azure Storage Account
+                          |
+                Hierarchical Namespace
+                          v
+              Azure Data Lake Storage Gen2
+                          |
+              +-----------+-----------+
+              v           v           v
+             raw     processed     curated
+              |           |           |
+              +-----------+-----------+
+                          v
+                Databricks / Synapse
+                          v
+                    Data Warehouse
+                          v
+                       Power BI
+
+(This is a standard "medallion architecture" pattern: raw -> processed
+-> curated, often also called bronze -> silver -> gold layers in Data
+Lake terminology.)
