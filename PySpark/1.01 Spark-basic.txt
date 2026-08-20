@@ -1,0 +1,8 @@
+Spark
+--------
+It is a distributed computing engine, which distributes our data to process it.
+
+Architecture
+----------
+
+
