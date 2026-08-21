@@ -58,4 +58,23 @@ SELECT COUNT(CITY) - COUNT(DISTINCT CITY) as unique_city FROM STATION
   FROM STATION 
   WHERE RIGHT(CITY, 1) IN ('a', 'e', 'i', 'o', 'u');
 
+-----------
+-- Q4. Query the two cities in STATION with the shortest and longest CITY names, as well as their respective lengths (i.e.: number of characters in the name). If there is more than one smallest or largest city, choose the one that comes first when ordered alphabetically.
 
+SELECT CITY, LENGTH(CITY)
+FROM STATION ORDER BY 
+LENGTH(CITY) ASC, CITY ASC
+LIMIT 1;
+
+SELECT CITY, LENGTH(CITY) 
+FROM STATION ORDER BY 
+LENGTH(CITY) DESC, CITY ASC
+LIMIT 1;
+
+-----------
+-- Q5.   Query the list of CITY names from STATION which have vowels (i.e., a, e, i, o, and u) as both their first and last characters. Your result cannot contain duplicates.
+
+  SELECT DISTINCT CITY 
+  FROM STATION 
+  WHERE LOWER(LEFT(CITY, 1)) IN ('a', 'e', 'i', 'o', 'u') 
+  AND LOWER(RIGHT(CITY, 1)) IN ('a', 'e', 'i', 'o', 'u');
