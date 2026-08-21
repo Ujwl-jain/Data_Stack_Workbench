@@ -21,28 +21,41 @@ SELECT COUNT(CITY) - COUNT(DISTINCT CITY) as unique_city FROM STATION
 -- Q2: Query the list of CITY names ending with vowels (a, e, i, o, u) from STATION. Your result cannot contain duplicates. 
 --   where LAT_N is the northern latitude and LONG_W is the western longitude.
 
-SELECT DISTINCT CITY FROM STATION WHERE 
--- CITY LIKE 'A%' OR 
-CITY LIKE 'a%' OR 
--- CITY LIKE 'E%' OR 
-CITY LIKE 'e%' OR 
--- CITY LIKE 'I%' OR 
-CITY LIKE 'i%' OR 
--- CITY LIKE 'O%' OR 
-CITY LIKE 'o%' OR 
--- CITY LIKE '%U' OR 
-CITY LIKE 'u%';
-
-OR
-
-SELECT DISTINCT CITY 
-FROM STATION 
-WHERE CITY REGEXP '[aeiou]$';
-
-OR
-
-SELECT DISTINCT CITY 
-FROM STATION 
-WHERE RIGHT(CITY, 1) IN ('a', 'e', 'i', 'o', 'u');
+  SELECT DISTINCT CITY FROM STATION WHERE 
+  -- CITY LIKE 'A%' OR 
+  CITY LIKE 'a%' OR 
+  -- CITY LIKE 'E%' OR 
+  CITY LIKE 'e%' OR 
+  -- CITY LIKE 'I%' OR 
+  CITY LIKE 'i%' OR 
+  -- CITY LIKE 'O%' OR 
+  CITY LIKE 'o%' OR 
+  -- CITY LIKE '%U' OR 
+  CITY LIKE 'u%';
   
+  OR
   
+  SELECT DISTINCT CITY 
+  FROM STATION 
+  WHERE CITY REGEXP '^[aeiou]';
+  
+  OR
+  
+  SELECT DISTINCT CITY 
+  FROM STATION 
+  WHERE LEFT(CITY, 1) IN ('a', 'e', 'i', 'o', 'u');
+
+-----------
+-- Q3: Query the list of CITY names ending with vowels (a, e, i, o, u) from STATION. Your result cannot contain duplicates.
+
+  SELECT DISTINCT CITY 
+  FROM STATION 
+  WHERE CITY REGEXP '[aeiou]$';
+
+  OR
+    
+  SELECT DISTINCT CITY 
+  FROM STATION 
+  WHERE RIGHT(CITY, 1) IN ('a', 'e', 'i', 'o', 'u');
+
+
