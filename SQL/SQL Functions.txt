@@ -196,7 +196,28 @@ STRING FUNCTIONS
     SELECT CONCAT_WS(', ', name, email, gender) AS summary FROM users;
     -- Output: Alice, alice@gmail.com, Female
     -- First argument is the separator, applied between all the rest automatically.
+-------------------------------------------------------
+7. RIGHT() LEFT() -- Extract specific string
+-------------------------------------------------------
 
+    extracts a specific number of characters from the right side (the end) or left side(the start) of a text string.
+    Symtax: RIGHT(str, len) or LEFT(str, len)
+
+    str: The text or column name you want to extract from (e.g., CITY).
+    len: The number of characters you want to extract from the end.
+
+    Example: 
+    RIGHT('New York', 1) extracts the last 1 letter → k
+    
+    SELECT DISTINCT CITY 
+    FROM STATION 
+    WHERE LEFT(CITY, 1) IN ('a', 'e', 'i', 'o', 'u');
+
+    SELECT DISTINCT CITY 
+    FROM STATION 
+    WHERE RIGHT(CITY, 1) IN ('a', 'e', 'i', 'o', 'u');
+
+    IN ('a', 'e', 'i', 'o', 'u'); is used to check if desired value is one of these.
 =======================================================
 NUMERIC FUNCTIONS
 =======================================================
@@ -387,6 +408,8 @@ LOWER(str)            | String      | Convert to lowercase                | SELE
 UPPER(str)            | String      | Convert to uppercase                | SELECT UPPER(name) FROM users
 CONCAT(a, b, ...)     | String      | Join strings together               | SELECT CONCAT(name,' ',email) FROM users
 CONCAT_WS(sep, ...)   | String      | Join with separator                 | SELECT CONCAT_WS(', ',name,email) FROM users
+LEFT(str, len)        | String      | Extracts len characters from start  | SELECT LEFT(name, 3) FROM users;
+RIGHT(str, len)       | String      | Extracts len characters from end    | SELECT RIGHT(name, 3) FROM users;
 ROUND(n, d)           | Numeric     | Round to d decimal places           | SELECT ROUND(salary, 2) FROM users
 FLOOR(n)              | Numeric     | Round down to whole number          | SELECT FLOOR(salary/1000) FROM users
 CEIL(n)               | Numeric     | Round up to whole number            | SELECT CEIL(salary/1000) FROM users
