@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------------------------
-# Given three sides of a triangle, determine if it's equilateral, isosceles, or scalene.
+# Q1. Given three sides of a triangle, determine if it's equilateral, isosceles, or scalene.
 
 ang1  = int(input("enter the side of a triangle: "))
 ang2  = int(input("enter the side of a triangle: "))
@@ -13,7 +13,7 @@ else:
     print("it is scalene")
 
 # ---------------------------------------------------------------------------------------------------    
-# Write a grading system: A (90+), B (80-89), C (70-79), D (60-69), F (below 60).
+# Q2. Write a grading system: A (90+), B (80-89), C (70-79), D (60-69), F (below 60).
 
 T_grade = int(input("enter the total number of percentage of your grade: "))
 
@@ -31,7 +31,7 @@ else:
     print("Better luck next time, Its F")
 
 # ------------------------------------------------------------------------------------------------------------------------
-# Given a list of numbers, classify each as 'small' (< 10),'medium' (10–99), or 'large' (100+). Return a list of labels.
+# Q3. Given a list of numbers, classify each as 'small' (< 10),'medium' (10–99), or 'large' (100+). Return a list of labels.
 
 list_n = [2,56,10,100,13,566,12,99,34,60,7]
 labels = []
@@ -48,7 +48,7 @@ for n in list_n:
 print(f'{list_n} : {labels}')
 
 # ------------------------------------------------------------------------------------------------------------------------
-# Write a function that takes age and returns the life stage:
+# Q4. Write a function that takes age and returns the life stage:
 #      'baby' (0-2), 'child' (3-12), 'teen' (13-17),
 #      'adult' (18-64), 'senior' (65+). Done
 
@@ -87,9 +87,33 @@ def age_checker(age):
 age = float(input("Enter the age: "))
 print(age_checker(age))
 
-
-
 # ------------------------------------------------------------------------------------------------------------------------
+# Q5. Write a function `bmi_category(weight_kg, height_m)` that
+#      calculates BMI and returns the category:
+#      Underweight (< 18.5), Normal (18.5–24.9),
+#      Overweight (25–29.9), Obese (30+).
+#      Use a local variable to store the computed BMI.
+
+def bmi_category(w, h):
+    bmi = w / (h**2)
+    if bmi < 18.5:
+        return 'Underweight'
+    elif bmi >= 18.5 and bmi <= 24.9:
+        return 'Normal'
+    elif bmi >= 25 and bmi <= 29.9:
+        return 'Overweight'
+    else:
+        return 'Obese'
+
+height_m = 1.6
+weight_in_kg = 56.32
+
+if height_m < 3:
+    result1 = bmi_category(weight_in_kg, height_m)
+else:
+   result1 = 'Invalid height, actual height should be in meters, centimerters and int not allowed'
+print(f'The answer is {result1}')
+
 
 # ------------------------------------------------------------------------------------------------------------------------
 
