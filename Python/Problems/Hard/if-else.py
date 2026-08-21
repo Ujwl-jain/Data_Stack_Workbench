@@ -1,4 +1,4 @@
-# FizzBuzz: Print numbers 1–100, but 'Fizz' for multiples of 3, 'Buzz' for 5, 'FizzBuzz' for both.
+# Q1. FizzBuzz: Print numbers 1–100, but 'Fizz' for multiples of 3, 'Buzz' for 5, 'FizzBuzz' for both.
 for n in range(1,101):
     if n % 3 == 0 and n % 5 == 0:
         n = "FizzBuzz"
@@ -21,7 +21,7 @@ for n in range(1, 101):
      
 
 # ----------------------------------------------------------------------------------------------------------------
-# Given a year, determine if it's a leap year using proper Gregorian rules.
+# Q2. Given a year, determine if it's a leap year using proper Gregorian rules.
 
 year = int(input("enter a year to check the leap year: "))
 
@@ -35,7 +35,7 @@ else:
     print("it is not a leap year")
 
 # ----------------------------------------------------------------------------------------------------------------
-# Write a function that takes a string representing a date in
+# Q3. Write a function that takes a string representing a date in
 #      "DD/MM/YYYY" format and validates it: check valid day, month,
 #      year ranges and whether the day is valid for that specific month
 #      (account for leap years too). 
@@ -91,7 +91,34 @@ else:
 
 
 # ----------------------------------------------------------------------------------------------------------------
+# Q4:  Write a function `validate_password(pwd)` that returns a list of
+#      failed rules. Rules: min 8 chars, at least one uppercase, one
+#      lowercase, one digit, one special character (!@#$%^&*).
+#      Return empty list if all rules pass.
 
+# here how any will work is if any of the character is upper, lower, digit or special it will return true
+# and if not(if there is no uppercase) true -> false, means the command will not run
+
+def validate_password(pwd):
+    failed = []
+
+    if len(pwd)<8:
+        failed.append('Min 8 charas')
+    if not any(c.isupper() for c in pwd):
+        failed.append('no uppercase')
+    if not any(c.islower() for c in pwd):
+        failed.append('no lowercase')
+    if not any(c.isdigit() for c in pwd):
+        failed.append('no digit')
+    if not any(c in '!@#$%^&*' for c in pwd):
+        failed.append('no special char')
+
+    if len(failed) == 0:
+        return []
+    else:
+        return failed
+result = validate_password('ocal2001')
+print(f'The answer is {result}')
 # ----------------------------------------------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------------------------------------------
