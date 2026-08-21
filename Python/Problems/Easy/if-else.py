@@ -60,7 +60,7 @@ result = login_access(user, password)
 print(f'{result}')
 
 #  ------------------------------------------------------------------------------------------------------------------
-# Q2.  Write a function that takes a number and returns "fizz" if
+# Q5.  Write a function that takes a number and returns "fizz" if
 #      divisible by 3, "buzz" if by 5, "fizzbuzz" if by both, else
 #      returns the number itself. Use a lambda to call it on a list.
 
@@ -87,7 +87,7 @@ result = list(map(fizzbuzz,list_num))
 print(result)
 
 
-# Q3.  Import the `math` module. Write a function that takes a number
+# Q6.  Import the `math` module. Write a function that takes a number
 #      and returns "perfect square" if its square root is a whole number,
 #      else "not a perfect square". Use math.sqrt() inside.
 
@@ -103,3 +103,26 @@ def calculations(n):
 num = int(input('Enter the number: '))
 result = calculations(num)
 print(f'The {num} is {result}')
+
+
+# 
+# Q7.  Write a function that takes a username (string) and password
+#      (string). If username is "admin" and password is "1234", return
+#      "Access granted", else return "Access denied".
+
+class LoginPage():
+    def __init__(self, user, ps):
+        self.user = user
+        self.ps = ps
+
+    def logincred(self):
+        if self.user == 'admin' and self.ps == '1234':
+              return 'Access granted'
+        else:
+             return 'Access denied'
+
+rohan = LoginPage('admin', '1234')
+ujjwal = LoginPage('admin', '1243')
+
+print(rohan.logincred())
+print(ujjwal.logincred())
