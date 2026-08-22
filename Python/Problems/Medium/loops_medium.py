@@ -1,5 +1,5 @@
 # =============================================================================
-# Binary Search — Implement on a sorted list using a while loop
+# Q1 Binary Search — Implement on a sorted list using a while loop
 # =============================================================================
  
  
@@ -186,7 +186,7 @@ except:
  
  
 # -----------------------------------------------------------------------------
-# 🔁 PATTERN TO REMEMBER — Binary Search Pattern
+# PATTERN TO REMEMBER — Binary Search Pattern
 # -----------------------------------------------------------------------------
 # Whenever you need to search in a sorted list efficiently:
 #
@@ -211,12 +211,12 @@ except:
 
 
 # ----------------------------------------------------------------------------------------------------
-# Use enumerate and zip together to pair elements from two lists with their index.
+# Q2. Use enumerate and zip together to pair elements from two lists with their index.
 
 
 # ---------------------------------------------------------------------------------
 # =============================================================================
-# Number Guessing Game
+# Q3. Number Guessing Game
 # Keep guessing until correct, count attempts
 # =============================================================================
  
@@ -317,7 +317,7 @@ except:
  
  
 # -----------------------------------------------------------------------------
-# ✅ FINAL CODE
+# FINAL CODE
 # -----------------------------------------------------------------------------
 import random
 
@@ -341,7 +341,7 @@ except:
     print("Something went wrong")
 
 # -----------------------------------------------------------------------------
-# 🧪 DRY RUN  |  num = 37  (random picked 37)
+# DRY RUN  |  num = 37  (random picked 37)
 # -----------------------------------------------------------------------------
 #
 #  attempt_count = 0
@@ -353,12 +353,12 @@ except:
 #  │    2    │  25   │  37 > 25     │ "Number is higher..."      │    2    │
 #  │    3    │  40   │  37 < 40     │ "Number is lower..."       │    3    │
 #  │    4    │  37   │  37 == 37    │ "You guessed correct in    │    4    │
-#  │         │       │              │  4 attempts!" → break ✅   │         │
+#  │         │       │              │  4 attempts!" → break      │         │
 #  └─────────┴───────┴──────────────┴────────────────────────────┴─────────┘
  
  
 # -----------------------------------------------------------------------------
-# 💡 KEY TAKEAWAYS
+# KEY TAKEAWAYS
 # -----------------------------------------------------------------------------
 # 1. Always STORE the result of random.randint() in a variable
 # 2. random is the LIBRARY — num is the actual number!
@@ -369,7 +369,7 @@ except:
  
  
 # -----------------------------------------------------------------------------
-# 🔁 PATTERN TO REMEMBER — Game Loop Pattern
+# PATTERN TO REMEMBER — Game Loop Pattern
 # -----------------------------------------------------------------------------
 # Whenever you need to keep doing something until a condition is met:
 #
@@ -396,7 +396,7 @@ except:
 # ----------------------------------------------------------------------------------------------------
 
 
-# Q52. Write a loop-based function that finds the GCD (greatest common
+# Q4.  Write a loop-based function that finds the GCD (greatest common
 #      divisor) of two numbers using the Euclidean algorithm.
 
 def GCD(a,b):
@@ -407,7 +407,7 @@ def GCD(a,b):
 result = GCD(48,18)
 print(result)
 
-# Q53. Given a 2D list (matrix), use nested loops to compute the sum of
+# Q5.  Given a 2D list (matrix), use nested loops to compute the sum of
 #      each row and each column separately. Return as two lists.
 
 '''
@@ -458,3 +458,51 @@ for col in range(len(list_2d[0])):
 print(row_sum)
 print(column_sum)
 
+# -------------------------------------------------------
+# Q13. Write a function using nested loops that prints a diamond pattern
+#      of stars for a given odd number n.
+#      Example n=5:
+#        *
+#       ***
+#      *****
+#       ***
+#        *
+
+def pattern(n):
+    '''
+    # For n=5:
+        #   *       ← 2 spaces, 1 star
+        #  ***      ← 1 space,  3 stars
+        # *****     ← 0 spaces, 5 stars  ← CENTER (widest row!)
+        #  ***      ← 1 space,  3 stars
+        #   *       ← 2 spaces, 1 star
+    
+    Dry run
+
+    n =5
+    n//2 = 2.5 -> 2
+
+    Top half range(0,3) = 0,1,2
+    i=0 → spaces = 2-0 = 2 → stars = 2*0+1 = 1 → "  *"
+    i=1 → spaces = 2-1 = 1 → stars = 2*1+1 = 3 → " ***"
+    i=2 → spaces = 2-2 = 0 → stars = 2*2+1 = 5 → "*****"
+
+    BOTTOM HALF — range(1, -1, -1) → i = 1, 0
+
+    i=1 → spaces = 2-1 = 1 → stars = 2*1+1 = 3 → " ***"
+    i=0 → spaces = 2-0 = 2 → stars = 2*0+1 = 1 → "  *"
+
+    '''
+    # top half including middle
+    for i in range(n//2 + 1):
+        spaces = ' ' * (n//2 - i)
+        stars  = '*' * (2*i + 1)
+        print(spaces + stars)
+
+    # bottom half (reverse of top, skip middle)
+    for i in range(n//2 - 1, -1, -1):
+        spaces = ' ' * (n//2 - i)
+        stars  = '*' * (2*i + 1)
+        print(spaces + stars)
+
+pattern(5)
