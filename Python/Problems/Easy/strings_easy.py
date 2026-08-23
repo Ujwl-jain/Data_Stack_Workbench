@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------------------------
-# Q21   Count vowels in a string without using any built-in count method.
+# Q1   Count vowels in a string without using any built-in count method.
 string_line = 'i am ujjwal jain and i am 24 years old'
 
 # set lookup is faster than list lookup here so instead of list we can create a set as well
@@ -37,7 +37,7 @@ print("Consonants:", count_c)
 
 
 # ---------------------------------------------------------------------------------------------------
-# Q22   Reverse words in a sentence (not characters).
+# Q2   Reverse words in a sentence (not characters).
 
 string_rev = 'i am ujjwal jain and i am 24 years old'
 list_rev = string_rev.split()[::-1]
@@ -47,7 +47,7 @@ print(rev_string)
 
 
 # -----------------------------------------------------------------------------------------------------
-# Q39. Write a function that takes a sentence and returns the number of
+# Q3. Write a function that takes a sentence and returns the number of
 #      words, characters (no spaces), and sentences (count periods).
 
 def sen_checker(sen):
@@ -71,11 +71,11 @@ print(f"the total words are {result_word}, the total char are {result_char} and 
 
 
 # 
-# Q57 [Easy]   Use strip, lstrip, rstrip, upper, lower, title, capitalize on the same string and print results.
+# Q4 [Easy]   Use strip, lstrip, rstrip, upper, lower, title, capitalize on the same string and print results.
 
-# Q58 [Easy]   Use split, join, replace, find, count, startswith, endswith on a paragraph string.
+# Q5 [Easy]   Use split, join, replace, find, count, startswith, endswith on a paragraph string.
 
-# Q19. Write a function that takes a sentence and uses a lambda to
+# Q6. Write a function that takes a sentence and uses a lambda to
 #      capitalize the first letter of every word that has more than
 #      3 characters. Leave shorter words unchanged.
 '''
@@ -108,7 +108,7 @@ st_result = list(map(lambda x: x.capitalize() if len(x)>3 else x, str_input.spli
 print(' '.join(st_result))
 
 
-# Q20. Import the `string` module. Write a function that removes all
+# Q7. Import the `string` module. Write a function that removes all
 #      punctuation from a given string using string.punctuation.
 
 '''
@@ -146,7 +146,7 @@ test_pun = "Hello, World! How are you? I'm fine... Thanks #1!"
 print(f'The result after performing punctuation cleaning : {punctuation_cleaner(test_pun)}')
 
 
-# Q21. Write a function `mask_email(email)` that returns the email
+# Q8. Write a function `mask_email(email)` that returns the email
 #      with all characters before '@' replaced by '*' except the
 #      first and last character.
 #      Example: "ujjwal@gmail.com" → "u*****l@gmail.co else x"
@@ -175,3 +175,14 @@ def mask_email(email):
 test_email = "jain24ujjwal24@gmail.com"
 print(f'The result after masking email : {mask_email(test_email)}')
 
+
+-------------------------
+# Q9. Write a function that takes a sentence and uses a lambda to
+#      capitalize the first letter of every word that has more than
+#      3 characters. Leave shorter words unchanged.
+
+sen = 'i am ujjwal jain, i am two zero two four born'
+
+final = list(map(lambda x: x.capitalize() if len(x)>3 else x, sen.split()))
+
+print(' '.join(final))
