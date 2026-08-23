@@ -1,4 +1,4 @@
-# Q23 [Medium] Check if two strings are anagrams of each other.
+# Q1 [Medium] Check if two strings are anagrams of each other.
 
 str1 = input("enter the first string: ")
 str2 = input("enter the 2nd string: ")
@@ -10,7 +10,7 @@ else:
     print("it is not anagram")
 
 
-# Q24 [Medium] Find the longest word in a sentence using string methods only.
+# Q2 [Medium] Find the longest word in a sentence using string methods only.
 
 '''
 my understanding:
@@ -117,7 +117,7 @@ print(find_longest_words('   '))                               # []
 print(find_longest_words('a bb ccc ddd'))                      # ['ccc', 'ddd']
 print(find_longest_words('one two three'))                     # ['three']
 
-# Q25 [Medium] Count frequency of each character in a string and return as a dictionary.
+# Q3 [Medium] Count frequency of each character in a string and return as a dictionary.
 
 '''
 my understanding
@@ -192,11 +192,9 @@ print(f'this result is produce using counter library {count_using_counter(str1)}
 
 print(f'this result is produce using counter library {count_using_manully(str1)}')
 
-# Q40. Write a function that converts a snake_case string to camelCase.
+# Q4. Write a function that converts a snake_case string to camelCase.
 #      Example: "hello_world_python" → "helloWorldPython"
 
-# Q40. Write a function that converts a snake_case string to camelCase.
-#      Example: "hello_world_python" → "helloWorldPython"
 
 '''
 My understanding
@@ -269,7 +267,35 @@ print("Snake Case → Camel Case Conversion:")
 for test in test_cases:
     print(f"'{test}' → '{snake_to_camel(test)}'")
 
-# Q41. Write a function that takes a string and returns True if all
+------------
+
+# Q5. Write a function that finds the longest common prefix among a
+#      list of strings. If no common prefix exists, return "".
+#      Example: ["flower","flow","flight"] → "fl"
+
+def prefix(st):
+    st = list(zip(*st))
+    pref = []
+    for i in st:
+        if len(set(i)) == 1:
+            pref.append(i[0])
+        else:
+            break
+
+    return ''.join(pref)
+    
+strings = prefix(["flower", "flow", "flight"])
+# Expected output: "fl"
+
+strings2 = prefix(["dog", "racecar", "car"])
+# Expected output: ""  (no common prefix)
+
+strings3 = prefix(["interview", "internal", "inter"])
+# Expected output: "inter"
+
+print(f"The result for the following test cases are: 1. {strings}, 2. {strings2}, 3. {strings3}")
+
+----
+# Q6. Write a function that takes a string and returns True if all
 #      brackets are balanced: (), [], {}.
 #      Example: "{[()]}" → True,  "{[(])}" → False
-
