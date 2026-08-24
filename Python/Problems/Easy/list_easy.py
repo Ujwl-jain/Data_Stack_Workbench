@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------------------------
-# Q13   Create a list of squares of numbers from 1 to 10 using list comprehension.
+# Q1.  Create a list of squares of numbers from 1 to 10 using list comprehension.
 
 # Normal way
 square_list = []
@@ -14,7 +14,7 @@ print(squares)
 
 
 # ---------------------------------------------------------------------------------------------------
-# Q14   Flatten a list of lists into a single list using list comprehension.
+# Q2.   Flatten a list of lists into a single list using list comprehension.
 
 list_list = [['my','name'],[1,2],[True, False]]
 final_result = [items for lists in list_list for items in lists]
@@ -22,7 +22,7 @@ print(final_result)
 
 
 # ---------------------------------------------------------------------------------------------------
-# Q15   Filter all even numbers from a list using list comprehension.
+# Q3.   Filter all even numbers from a list using list comprehension.
 
 list_num = [2,1,4,1,5,6,2,8,10,54,99,104,32,14]
 list_even = []
@@ -39,7 +39,7 @@ list_even2 = [items for items in list_num if items % 2 == 0]
 print(list_even2)
 
 # ---------------------------------------------------------------------------------------------------
-# Q43. Given a list of integers, return two lists: one with positive
+# Q4. Given a list of integers, return two lists: one with positive
 #      numbers and one with negative numbers, using list comprehension.
 
 # using list
@@ -60,7 +60,7 @@ list_nc = [i for i in list_No if i<0]
 
 print(f'the list of postive number: {list_pc} and the list of negative integers: {list_nc}')
 
-# Q28. Write a function that takes a list and uses a lambda with sorted()
+# Q5. Write a function that takes a list and uses a lambda with sorted()
 #      to sort it by absolute value.
 #      Example: [-5, 2, -1, 4] → [-1, 2, 4, -5]
 
@@ -79,7 +79,7 @@ result = sorted(lst, key = lambda x: abs(x))
 print(result)
 
 
-# Q29. Use list comprehension with a local variable `threshold = 50` to
+# Q6. Use list comprehension with a local variable `threshold = 50` to
 #      filter a list of scores — keep scores above threshold and double
 #      them.
 
@@ -89,7 +89,7 @@ threshold = 50
 final_list = [x*2 for x in scores if x > threshold]
 print(final_list)
 
-# Q30. Write a function using map() and a lambda that takes a list of
+# Q.7 Write a function using map() and a lambda that takes a list of
 #      temperatures in Celsius and returns them converted to Fahrenheit.
 '''
 My understanding:
@@ -114,7 +114,7 @@ result_map = list(map(lambda x:(x * 9/5) + 32, cel))
 print(f"Before converting to Fahrenheit {cel}, After converting to Faherheit {result_map}")
 
 # modified verson:
-# from the dict with key value pair as city and temp, fetch the temperatures in celsius and convert it into fahren, and then return the dict with key value pair has city, fahrenheit
+#Q8.  from the dict with key value pair as city and temp, fetch the temperatures in celsius and convert it into fahren, and then return the dict with key value pair has city, fahrenheit
 
 def temp_convertor_list(cel):
     list_celv = []
@@ -188,3 +188,6 @@ result3 = temp_convertor_enumrator(city_temps)
 print(f"Using list with zip, Before converting to Fahrenheit {city_temps}, After converting to Faherheit {result}")
 print(f"Using Dict with zip,Before converting to Fahrenheit {city_temps}, After converting to Faherheit {result2}")
 print(f"Using Enumrator, Before converting to Fahrenheit {city_temps}, After converting to Faherheit {result3}")
+
+# ---------
+
