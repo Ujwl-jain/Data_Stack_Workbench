@@ -148,4 +148,56 @@ for i in range(N):
         
     elif 'reverse' in command[0]:
         lst.reverse()
-        
+
+---------
+# Nested Lists — Second Lowest Grade
+
+# Given the names and grades for each student in a class of n students, store them in a nested list and print the name(s) of any student(s) having the second lowest grade.
+
+# Note: If there are multiple students with the second lowest grade, order their names alphabetically and print each name on a new line.
+
+# Input Format
+
+# The first line contains an integer, n, the number of students.
+
+# The 2n subsequent lines describe each student over 2 lines:
+
+# The first line contains a student's name.
+# The second line contains their grade.
+# Output Format
+
+# Print the name(s) of any student(s) having the second lowest grade. If there are multiple students, order their names alphabetically and print each one on a new line.
+
+# Sample Input
+# 5
+# Harry
+# 37.21
+# Berry
+# 37.21
+# Tina
+# 37.2
+# Akriti
+# 41
+# Harsh
+# 39
+# Sample Output
+# Berry
+# Harry
+
+if __name__ == '__main__':
+    lst_marks = []
+    for _ in range(int(input())):
+        name = input()
+        score = float(input())
+        lst_marks.append([name, score])
+
+lst_marks_sorted = sorted(lst_marks, key = lambda lst_marks: lst_marks[1])
+
+second_lowest_score = sorted(set(i[1] for i in lst_marks_sorted))[1]
+
+names_2nd_lowest = sorted(
+    [i[0] for i in lst_marks_sorted if i[1] == second_lowest_score]
+)
+
+for name in names_2nd_lowest:
+    print(name)
