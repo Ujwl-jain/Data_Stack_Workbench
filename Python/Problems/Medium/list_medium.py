@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------------------------
-# Q16 [Medium] Given a list of words, return a list of words longer than 5 characters, uppercased.
+# Q1. Given a list of words, return a list of words longer than 5 characters, uppercased.
 
 list_word = ["mango", "tomato", "potato", "ice", "water", "colddrinks", "Lemon"]
 list_long =[]
@@ -21,7 +21,7 @@ list_long = [words.upper() for words in list_word if len(words) > 5]
 
 
 # ---------------------------------------------------------------------------------------------------
-# Q17 [Medium] Remove duplicates from a list while preserving order (no set shortcuts).5
+# Q2. Remove duplicates from a list while preserving order (no set shortcuts).5
 
 list_rem = ["mango", "mango", "potato", "ice", "water", "colddrinks", "ice"]
 list_original =[]
@@ -36,7 +36,7 @@ print(list_rem)
 
 
 # ---------------------------------------------------------------------------------------------------
-# Q18 [Medium] Transpose a matrix (list of lists) using list comprehension.
+# Q3. Transpose a matrix (list of lists) using list comprehension.
 
 matrix = [[1,2],[5,6],[8,9],[0,4]]
 transpose = []
@@ -54,7 +54,7 @@ transpose_comp = [                              # outer list
             for lst in range(len(matrix[0]))    # outer loop
             ]
 
-# Q59 [Medium] Use list methods: append, extend, insert, remove, pop, sort, reverse, index, count.
+# Q4. Use list methods: append, extend, insert, remove, pop, sort, reverse, index, count.
 
 list_methods = ['Ujjwal', 'jain', 59, True, False, 'I am ujjwal Jain']
 list_methods.append('Mango is a fruit')
@@ -69,7 +69,7 @@ print(list_methods.index('Yeahhhh'))
 print(list_methods.count('Ujjwal'))
 print(list_methods)
 
-# Q44. Given a list of sentences, return a list of lists where each inner
+# Q45 Given a list of sentences, return a list of lists where each inner
 #      list contains the individual words of that sentence.
 #      Use list comprehension.
 
@@ -98,7 +98,7 @@ print(nexted_list_of_words)
 nexted_list_comp_words = [word.split() for word in list_of_sentence]
 print(nexted_list_comp_words)
 
-# Q45. Given a list of numbers, return a new list replacing every number
+# Q6. Given a list of numbers, return a new list replacing every number
 #      less than 0 with 0 and every number greater than 100 with 100
 #      (clamping). Use list comprehension.
 
@@ -154,3 +154,17 @@ updated_list_comp = [0 if num<0 else 100 if num>100 else num for num in list_num
 # │ 300 │  300 > 100│ second condition true → 100   │  100   │
 # │  8  │  0≤8≤100  │ both false → keep num         │   8    │
 # └─────┴───────────┴──────────────────────────────┴────────┘
+
+---------
+# Q7. Write a function chunk_list(lst, size) that splits a list into
+#      chunks of given size. Return a list of lists.
+#      Example: ([1,2,3,4,5,6,7], 3) → [[1,2,3],[4,5,6],[7]]
+
+def chunk(lst, size):
+    chunk_lst= []
+    for i in range(0, len(lst), size):
+        chunk_lst.append(lst[i:i+size])
+    return chunk_lst
+
+result = [1,2,3,4,5,6,7]
+print(chunk(result,3))
