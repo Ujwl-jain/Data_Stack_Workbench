@@ -120,3 +120,38 @@ WHERE
 LAT_N < 137.2345 
 ORDER BY LAT_N DESC 
 LIMIT 1 
+
+---------
+-- Q12. Query the Western Longitude (LONG_W) for the largest Northern Latitude (LAT_N) in STATION that is less than 137.2345. Round your answer to 4 decimal places.
+
+SELECT ROUND(LONG_W,4) FROM STATION
+WHERE LAT_N < 137.2345 
+ORDER BY LAT_N DESC
+LIMIT 1
+
+---------
+-- Q13. Query the smallest Northern Latitude (LAT_N) from STATION that is greater than 38.7780. Round your answer to 4 decimal places.
+
+SELECT ROUND(LAT_N, 4) FROM STATION
+WHERE LAT_N > 38.7780
+ORDER BY LAT_N
+LIMIT 1
+
+---------
+-- Q14. Query the Western Longitude (LONG_W)where the smallest Northern Latitude (LAT_N) in STATION is greater than 38.7780. Round your answer to 4 decimal places.
+
+SELECT ROUND(LONG_W,4) FROM STATION
+WHERE LAT_N > 38.7780
+ORDER BY LAT_N
+LIMIT 1;
+
+---------
+-- Q15. Query the following two values from the STATION table:
+
+-- The sum of all values in LAT_N rounded to a scale of 2 decimal places.
+-- The sum of all values in LONG_W rounded to a scale of 2 decimal places.
+
+SELECT ROUND(SUM(LAT_N),2) AS lat, 
+ROUND(SUM(LONG_W),2) AS lon
+FROM STATION
+
