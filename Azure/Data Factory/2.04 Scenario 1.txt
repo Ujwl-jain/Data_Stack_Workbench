@@ -1,0 +1,264 @@
+ADF - GET METADATA, FOREACH & IF CONDITION
+========================================
+
+SCENARIO
+----------------------------------------
+Let's say we have 2 files - file1 "reportingfile" and file2
+"datafile". "reportingfile" is used by the reporting team, and
+"datafile" will be used by the data science team.
+
+Requirement 1: create another container called "reporting team", used
+by the BI analyst.
+
+Problem: assume there are 100+ files, and each department's files
+start with that department's name, e.g.:
+Reporting = reportingfile, Data Science = datafile, HR = hrfile,
+Marketing = marketfile, etc.
+
+Each department needs to see only their own respective files:
+1. They can't share a common folder, since they'd need to filter it
+   out manually every time.
+2. For security reasons, departments are not allowed to see each
+   other's files.
+
+So the business needs a solution that automatically sorts each
+department's files into separate containers named after that
+department - built as a pipeline that only picks up the files
+belonging to that particular department's container.
+
+This will include 3 activities:
+1. Get Metadata
+2. If Condition
+3. ForEach
+
+
+----------------------------------------------
+ACTIVITY: GET METADATA
+----------------------------------------------
+A resource just like Copy Data - can be found/searched in the
+Activities tab.
+
+Let's say we have multiple files in a folder - we need to pull the
+list of all files in that folder, in order to sort/segregate them into
+different destination containers.
+
+- If you give a specific file name in the destination dataset, Get
+  Metadata will only fetch metadata for THAT one file.
+- Since we want information about the ENTIRE folder instead, we
+  create a new dataset for the destination WITHOUT specifying a file
+  name (pointing only at the folder/container level).
+
+So by setting the destination dataset without a file name in the Get
+Metadata activity's settings, we've created the start of the pipeline
+- the connection is now scoped to the destination folder as a whole,
+not a single file.
+
+
+SCREENSHOT 1 DESCRIPTION - Destination dataset (no file name set)
+----------------------------------------
+Shows a dataset named "scenario1_destination" (type: DelimitedText/
+CSV). On the right, Properties panel shows Name = scenario1_destination,
+with empty Description and Annotations. Below, the Connection tab is
+open, showing Linked service = "FirstPipeline", and the path broken
+into: destination-container / destination_csv / [File name - left
+BLANK]. Leaving "File name" empty is exactly what makes this a
+folder-level dataset rather than a single-file dataset.
+
+
+THE QUESTION: WHAT KIND OF METADATA DO WE WANT FROM THE FOLDER?
+----------------------------------------
+Then select Field list -> Child items.
+
+Child items = the files inside the particular folder given in the
+path while creating the dataset.
+
+
+SCREENSHOT 2 DESCRIPTION - Get Metadata activity Settings tab
+----------------------------------------
+Tabs shown: General, Settings (selected), User properties. Dataset =
+"scenario1_destination". Field list section has a "+ New" / "Delete"
+option, with a checkbox row currently open showing a dropdown of
+available metadata fields: Child items, Exists, Item name, Item type,
+Last modified (plus "Add dynamic content"). Below that: Start time /
+End time (UTC) fields for filtering by last modified, and a "Skip line
+count" field.
+
+Explaining the other field list options (filling in "Others use case
+(please define)" from your notes):
+- Exists: returns true/false - whether the file or folder actually
+  exists at that path. Useful for validation before running the rest
+  of a pipeline.
+- Item name: returns just the name of the file/folder itself (used
+  when the dataset points at ONE specific file, not a folder).
+- Item type: returns whether the item is a "File" or a "Folder".
+- Last modified: returns the last-modified timestamp of the file/
+  folder - useful for incremental-load logic (only process files
+  modified after a certain date).
+- (Other fields exist too, depending on the store type, such as Size,
+  Created time, Content MD5, Structure, and Column count - these
+  weren't shown in your screenshot but are available for file-level
+  datasets.)
+
+
+AFTER CREATING THE FIELD LIST, DEBUG
+----------------------------------------
+Debug gives you an array/list of the folder's contents, like this:
+
+{
+  "childItems": [
+    { "name": "2nd file.csv", "type": "File" },
+    { "name": "AMC", "type": "Folder" },
+    { "name": "Fact_Sales_1.csv", "type": "File" },
+    { "name": "Ujwl-jain", "type": "Folder" }
+  ],
+  "effectiveIntegrationRuntime": "AutoResolveIntegrationRuntime (East US)",
+  "executionDuration": 3,
+  "durationInQueue": { "integrationRuntimeQueue": 1 },
+  "billingReference": {
+    "activityType": "PipelineActivity",
+    "billableDuration": [
+      { "meterType": "AzureIR", "duration": 0.016666666666666666, "unit": "Hours" }
+    ]
+  }
+}
+
+From this output: we have 2 folders and 2 files, plus other info like
+integration runtime and billing.
+
+Now suppose, like in the scenario, we have 100s of files - we need to
+pull all their details. Through the Get Metadata activity, we can
+fetch this in the exact same JSON format, and use that data to answer
+"which department does each file belong to, and where should it go?"
+using a separate/downstream activity.
+
+Get Metadata has 4 types of OUTPUT PATHS (activity dependency
+conditions) on the canvas:
+1. On Skip
+2. On Success
+3. On Fail
+4. On Completion
+
+Based on these, we control how the FOLLOWING activities behave - e.g.
+if we want the list of files, then AFTER success, go to the ForEach
+loop for further iteration.
+
+
+----------------------------------------------
+ACTIVITY: IF CONDITION AND FOREACH
+----------------------------------------------
+Let's say we have 100s of files starting with "reporting", "hr",
+"market", etc. From this bunch, we can use an If Condition to pick out
+only the files that start with a certain department prefix - e.g. if
+a file starts with "hr", do this and that, using the If Condition
+activity.
+
+Condition example: if the file name starts with "HR", then migrate
+that file into the HR folder.
+
+But since there will be multiple files, and Get Metadata gives us an
+array (a list) of files, we need to check EACH file in the source
+folder one at a time - so this needs to be looped. (It would be a
+different, simpler case if there were only 1 file per department.)
+
+To iterate over the folder, we use the ForEach activity.
+
+In coding terms, this whole flow maps to:
+
+A = [file1, file2, file3]     -> Get Metadata activity
+For i in A:                    -> ForEach activity
+    If file starts with "f":   -> If Condition activity
+        copy(file)              -> Copy activity
+
+
+SCREENSHOT 3 DESCRIPTION - Pipeline canvas: Get Metadata -> ForEach
+----------------------------------------
+Canvas shows "Get Metadata" activity (named "Scenario1") connected via
+a green success arrow into a "ForEach" activity (named "IterateCSV").
+Inside the ForEach box: "Activities - No activities" with a "+" button
+to add one. A separate "If Condition" activity block (named "If
+Condition1") is shown off to the side, not yet connected.
+
+Below the canvas, the ForEach activity's General tab is open: Name =
+IterateCSV, Description = "Iteration over CSV files to check for
+desired files in the folder", Activity state = Activated.
+
+Correction noted directly on the original notes/image (kept as-is,
+it's the author's own self-correction): "if condition is to be done
+INSIDE the for loop if iterating, else we can do it outside" - meaning
+the If Condition activity needs to be placed inside the ForEach loop's
+"Activities" area (not left disconnected beside it), since it needs to
+run once per file during each iteration.
+
+
+SCREENSHOT 4 DESCRIPTION - Corrected layout: If Condition nested inside ForEach
+----------------------------------------
+Canvas now shows "Get Metadata" (Scenario1) connected to "ForEach"
+(IterateCSV). Inside the ForEach box, under "Activities", there is now
+an "If file matches" activity (an If Condition activity) with a "+"
+to chain further activities after it - correctly nested inside the
+loop this time, matching the correction above.
+
+
+FLOW - STEP BY STEP
+----------------------------------------
+1. Get Metadata gets the array/list of items from the container.
+2. ForEach iterates over them, using the output of Get Metadata to
+   know what to iterate on:
+       @activity('Scenario1').output.childItems
+
+   a. Inside childItems we only need the NAME (not the type), so we
+      use the ".name" PROPERTY to get just the names.
+      Correction: this is a property access, not a method call - it
+      should be written as item().name (no parentheses after "name").
+      Writing it as ".name()" (as if it were a function) is incorrect
+      syntax in ADF's expression language.
+
+   b. Inside the ForEach, we use an If Condition activity.
+
+   c. If Condition, as follows:
+      i.   If item().name starts with 'Fact', using the startswith()
+           function. (Correction: the function is "startswith()", not
+           ".start()" - ADF has multiple built-in string functions you
+           can use depending on what you need to check, e.g.
+           startswith, endswith, contains, etc.)
+      ii.  Expression: @startswith(item().name, 'Fact')
+      iii. Inside the If Condition activity, you set the True and
+           False branches - inside these, you add the actual Copy
+           activity (with source and sink parameters) to move the
+           matching file.
+
+
+SCREENSHOT 5 DESCRIPTION - Copy activity inside "True activities" of If Condition
+----------------------------------------
+Breadcrumb at top: Scenario 1 > IterateCSV > If file matches > True
+activities. Canvas shows a single "Copy data" activity named
+"Finalised_data". Below, the activity's Source tab is open:
+- Source dataset = "paramterised_source" (dataset name as typed in
+  the original build - note the typo "paramterised" instead of
+  "parameterised", kept as shown in the tool since it's literally the
+  dataset's name)
+- Dataset properties: parameter name = p_file_name, Value =
+  @item().name
+- File path type = "File path in dataset" (selected)
+
+This confirms exactly how the currently-looping file name gets fed
+into the source dataset dynamically.
+
+
+ONE THING TO REMEMBER (clarified)
+----------------------------------------
+Original note: "Since the file name is getting looped we will get the
+file name from that, so we do not need to give the file name while
+working on source and sink inside the True or False activity of If
+Condition."
+
+Clarification: to be precise, you're not skipping the file name
+entirely - you still need a way for the dataset to receive it. What
+actually happens (as shown in Screenshot 5) is that the dataset is
+built with a PARAMETER (p_file_name) instead of a hardcoded static
+file name, and that parameter's value is set dynamically to
+@item().name - i.e. whatever file the ForEach loop is currently on.
+So the file name isn't hardcoded/typed manually into the dataset - it
+flows in automatically from the loop, via the dataset's parameter.
+This applies to both the source and sink datasets used inside the
+True/False branches.
