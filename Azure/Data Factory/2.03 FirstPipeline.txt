@@ -1,0 +1,110 @@
+ADF - FIRST PIPELINE
+========================================
+
+STEP 1: CREATE A CONNECTION (LINKED SERVICE)
+----------------------------------------
+In order to build a pipeline, we first need to create a connection
+with the source and destination, using a Linked Service.
+
+There are multiple source types available:
+Azure: Cosmos DB for Mongo/NoSQL, Blob storage, MySQL, PostgreSQL, SQL
+       Database, File storage, etc.
+Others: Amazon S3, Apache Impala, GitHub (file system), Google Cloud
+        Storage, Hive, Jira, PostgreSQL, MySQL, Oracle, Spark, etc.
+
+Correction: it's the "Manage" tab (not "managers" tab) -> Linked
+services -> New.
+
+Fill the details:
+- Name (for the Linked Service itself - you can name it anything, e.g.
+  the screenshot shows one named "FirstPipeline"; the name doesn't
+  have to literally describe a pipeline, it's just an identifier)
+- Add description if needed
+- Select the subscription (for Azure resources) or fill in
+  server/connection details (for non-Azure sources like MySQL,
+  Oracle, etc.)
+- Before creating the service, click "Test connection" - if
+  successful, click Create.
+
+Linked service connection: done.
+
+
+SCREENSHOT DESCRIPTION - IMAGE 2 (Manage tab -> Linked services)
+----------------------------------------
+Left navigation shows the Manage hub: General (Connector upgrade
+advisor, Factory settings), and Connections (Linked services,
+Integration runtimes, Microsoft Purview). The Linked services page is
+selected, showing the description "Linked service defines the
+connection information to a data store or compute" at the top, a
+"+ New" button, a filter/search box, and a list showing 1 linked
+service created so far, named "FirstPipeline".
+
+
+STEP 2: FIRST ACTIVITY - COPY DATA
+----------------------------------------
+1st Activity: Copy from one place to another within Data Storage.
+
+So first, in ADF, create a Pipeline from the Author tab, then check
+the Activities pane - under "Move and transform", you'll find "Copy
+data".
+
+Drag the Copy data activity onto the canvas. Then set:
+- Source: select the respective dataset you want to fetch data FROM.
+- Sink (destination): select the respective dataset you want to put
+  the data INTO.
+
+For both, you give the dataset a name and need to set the PATH of the
+source/destination - just like navigating folders in a local system.
+
+That's it - simply click Debug to copy one file to another. You can
+also rename the file in the destination directly within the Sink
+settings (you don't have to keep the original file's name).
+
+
+SCREENSHOT DESCRIPTION - IMAGE 1 (Author tab, Copy File pipeline)
+----------------------------------------
+Left panel "Factory Resources" shows: Pipelines (1) -> "Copy File";
+Change Data Capture (preview) (0); Datasets (2) -> "DelimitedText1" and
+"Destination_file"; Data flows (0); Power Query (0).
+
+Center canvas shows the "Copy File" pipeline open, with tabs Validate,
+Debug, Add trigger. On the canvas is a single "Copy data" activity
+(labeled "Copy File") showing a green checkmark (succeeded).
+
+Bottom panel shows the Output tab of a pipeline run: Pipeline run ID
+shown, Pipeline status = Succeeded, and a run history table showing
+Activity name "Copy File", Activity status = Succeeded, Activity type
+= Copy data, Run start "8/20/2026, 3:40:57 PM", Duration "34s",
+Integration runtime = AutoResolveIntegrationRuntime.
+
+(This confirms the debug run of the Copy File pipeline - moving data
+from the "DelimitedText1" source dataset to the "Destination_file"
+sink dataset - completed successfully in 34 seconds.)
+
+
+IMPORTANT CLARIFICATION - RE-RUNNING WITH THE SAME DESTINATION NAME
+----------------------------------------
+Your note: "If the file is already in the destination and you debug
+again it will not copy over there with different name until and
+unless you set a different name, this is done within the azure data
+storage"
+
+Clarification (this behaves differently from what you might expect
+from a local file system, so worth being precise about):
+
+- On a local Windows/Mac file system, copying a file into a folder
+  that already has a file with that name usually either blocks you or
+  auto-renames it (e.g. "file (1).csv").
+- In Azure Storage (Blob/Data Lake), there is no automatic renaming.
+  If your Sink dataset points to the same file path/name on each run,
+  ADF will simply OVERWRITE the existing file silently by default -
+  it does not skip the copy, and it does not auto-generate a new name.
+- If you want a NEW file to be created on every run instead of
+  overwriting, you need to make the destination file name dynamic
+  yourself - e.g. by using an expression in the Sink dataset's file
+  name parameter (such as including the pipeline run ID, a timestamp,
+  or a trigger time), or by changing the "Copy behavior" setting in
+  the Sink tab.
+- So the correct takeaway is: same destination name + re-run = the old
+  file gets overwritten (not skipped, not duplicated) - unless you
+  explicitly set a different/dynamic name.
