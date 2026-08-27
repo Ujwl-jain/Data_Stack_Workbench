@@ -162,6 +162,27 @@ FROM STATION
 --   COUNTRYCODE = VARCHAR2(3)
 --   DISTRICT = VARCHAR2(20)
 --   POPULATION = NUMBER
+
+-- Table:  COUNTRY
+
+-- Field,Type
+-- CODE,VARCHAR2(3)
+-- NAME,VARCHAR2(44)
+-- CONTINENT,VARCHAR2(13)
+-- REGION,VARCHAR2(25)
+-- SURFACEAREA,NUMBER
+-- INDEPYEAR,VARCHAR2(5)
+-- POPULATION,NUMBER
+-- LIFEEXPECTANCY,VARCHAR2(4)
+-- GNP,NUMBER
+-- GNPOLD,VARCHAR2(9)
+-- LOCALNAME,VARCHAR2(44)
+-- GOVERNMENTFORM,VARCHAR2(44)
+-- HEADOFSTATE,VARCHAR2(32)
+-- CAPITAL,VARCHAR2(4)
+-- CODE2,VARCHAR2(2)
+  
+------------------------- 
 -- Q16.  Query a count of the number of cities in CITY having a Population larger than .
 SELECT COUNT(DISTINCT(NAME)) FROM CITY
 WHERE POPULATION > 100000
@@ -188,3 +209,28 @@ WHERE DISTRICT = 'California';
 
 SELECT SUM(POPULATION) FROM CITY
 WHERE COUNTRYCODE = 'JPN';
+
+---------
+-- Q21. Given the CITY and COUNTRY tables, query the names of all cities where the CONTINENT is 'Africa'.
+-- Note: CITY.CountryCode and COUNTRY.Code are matching key columns.
+
+SELECT CITY.NAME FROM CITY
+LEFT JOIN COUNTRY 
+ON CITY.COUNTRYCODE = COUNTRY.CODE
+WHERE COUNTRY.CONTINENT = 'Africa'
+
+-- ---------
+-- Q22. Given the CITY and COUNTRY tables, query the names of all the continents (COUNTRY.Continent) and their respective average city populations (CITY.Population) rounded down to the nearest integer.
+-- Note: CITY.CountryCode and COUNTRY.Code are matching key columns.
+
+SELECT COUNTRY.CONTINENT, FLOOR(AVG(CITY.POPULATION))
+FROM COUNTRY INNER JOIN CITY
+ON COUNTRY.CODE = CITY.COUNTRYCODE
+GROUP BY COUNTRY.CONTINENT;
+
+---------
+-- 23. Query the difference between the maximum and minimum populations in CITY.
+
+SELECT (MAX(POPULATION) - MIN(POPULATION))
+FROM CITY
+
