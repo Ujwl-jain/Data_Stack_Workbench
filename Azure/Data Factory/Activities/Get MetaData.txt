@@ -1,0 +1,62 @@
+Get metadata:
+
+For setting this up, In the setting tabs we can set the link service and source details
+
+And in settings tab Field list has many things through which we can get many kind of output, which are:
+
+1. Child items
+Using this, we can get the details of the items exist in the source in the json format like this:
+
+it is usefull for when we need to loop over the items through which we can do it using the names of the files
+
+{
+	"childItems": [
+		{
+			"name": "360 ONE Balanced Hybrid Fund.xls",
+			"type": "File"
+		},
+		{
+			"name": "Mirae Asset Focused Fund.xls",
+			"type": "File"
+		}
+	],
+	"effectiveIntegrationRuntime": "AutoResolveIntegrationRuntime (East US)",
+	"executionDuration": 1,
+	"durationInQueue": {
+		"integrationRuntimeQueue": 0
+	},
+	"billingReference": {
+		"activityType": "PipelineActivity",
+		"billableDuration": [
+			{
+				"meterType": "AzureIR",
+				"duration": 0.016666666666666666,
+				"unit": "Hours"
+			}
+		]
+	}
+}
+
+2. Exists
+
+ {
+	"exists": true,
+	"effectiveIntegrationRuntime": "AutoResolveIntegrationRuntime (East US)",
+	"executionDuration": 2,
+	"durationInQueue": {
+		"integrationRuntimeQueue": 0
+	},
+	"billingReference": {
+		"activityType": "PipelineActivity",
+		"billableDuration": [
+			{
+				"meterType": "AzureIR",
+				"duration": 0.016666666666666666,
+				"unit": "Hours"
+			}
+		]
+	}
+} 
+3. Item Name
+4. Item Type 
+5. last modified
