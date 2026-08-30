@@ -1,62 +1,166 @@
-Get metadata:
+GET METADATA - FIELD LIST OUTPUTS
+========================================
 
-For setting this up, In the setting tabs we can set the link service and source details
+SETUP
+----------------------------------------
+For setting this up, in the Settings tab we set the Linked Service and
+source details. In the Settings tab, "Field list" has many options
+through which we can get many kinds of output.
 
-And in settings tab Field list has many things through which we can get many kind of output, which are:
 
-1. Child items
-Using this, we can get the details of the items exist in the source in the json format like this:
+COMMON FIELDS IN EVERY OUTPUT (explaining what you asked about)
+----------------------------------------
+Notice that no matter which Field list option you pick (childItems,
+exists, itemName, itemType, lastModified), every single output JSON
+also includes these same 4 extra fields at the bottom. Here's what
+each one means:
 
-it is usefull for when we need to loop over the items through which we can do it using the names of the files
+- effectiveIntegrationRuntime
+    Tells you WHICH Integration Runtime actually ran this activity,
+    and in which region. Example: "AutoResolveIntegrationRuntime
+    (East US)" means you didn't manually pick a specific IR, so ADF
+    auto-selected the default Azure IR, and it happened to run in the
+    East US region (Azure picks the region automatically, generally
+    trying to match where your data/linked service lives).
+
+- executionDuration
+    How long the activity actually took to RUN, in seconds. E.g.
+    executionDuration: 1 means it took 1 second to execute once it
+    started.
+
+- durationInQueue -> integrationRuntimeQueue
+    How long the activity had to WAIT in a queue (in seconds) before
+    it actually started executing - this is separate from
+    executionDuration. This happens because the Integration Runtime
+    may need a moment to spin up/become available before your
+    activity can run on it. E.g. durationInQueue.integrationRuntimeQueue:
+    10 (as seen in your "last modified" example) means it waited 10
+    seconds in queue before running - that run took a bit longer to
+    start than the others.
+
+- billingReference
+    This is exactly what it sounds like - the billing/cost info for
+    this specific activity run:
+    - activityType: "PipelineActivity" - just confirms this was a
+      regular activity inside a pipeline (as opposed to other billable
+      operation types).
+    - billableDuration: an array showing what you're actually charged
+      for. Here:
+        - meterType: "AzureIR" - means you were billed for using the
+          Azure Integration Runtime (as opposed to a Self-Hosted IR,
+          which is billed differently/isn't metered this way since you
+          host it yourself).
+        - duration: 0.016666666666666666 - this is HOURS, and
+          0.0166666... hours = exactly 1 minute. Azure Integration
+          Runtime activity runs are billed with a 1-minute minimum,
+          rounded up - so even a 1-2 second Get Metadata call still
+          shows as 1 minute billed, since that's the smallest billing
+          increment.
+        - unit: "Hours" - confirms the duration figure above is
+          expressed in hours (even though the actual number represents
+          just 1 minute).
+
+
+THE 5 FIELD LIST OPTIONS YOU TESTED
+----------------------------------------
+
+1. CHILD ITEMS
+Using this, we get the details of the items existing in the source, in
+JSON format, like this. It's useful when we need to loop over the
+items - we can do that using the names of the files.
 
 {
-	"childItems": [
-		{
-			"name": "360 ONE Balanced Hybrid Fund.xls",
-			"type": "File"
-		},
-		{
-			"name": "Mirae Asset Focused Fund.xls",
-			"type": "File"
-		}
-	],
-	"effectiveIntegrationRuntime": "AutoResolveIntegrationRuntime (East US)",
-	"executionDuration": 1,
-	"durationInQueue": {
-		"integrationRuntimeQueue": 0
-	},
-	"billingReference": {
-		"activityType": "PipelineActivity",
-		"billableDuration": [
-			{
-				"meterType": "AzureIR",
-				"duration": 0.016666666666666666,
-				"unit": "Hours"
-			}
-		]
-	}
+    "childItems": [
+        { "name": "360 ONE Balanced Hybrid Fund.xls", "type": "File" },
+        { "name": "Mirae Asset Focused Fund.xls", "type": "File" }
+    ],
+    "effectiveIntegrationRuntime": "AutoResolveIntegrationRuntime (East US)",
+    "executionDuration": 1,
+    "durationInQueue": { "integrationRuntimeQueue": 0 },
+    "billingReference": {
+        "activityType": "PipelineActivity",
+        "billableDuration": [
+            { "meterType": "AzureIR", "duration": 0.016666666666666666, "unit": "Hours" }
+        ]
+    }
 }
 
-2. Exists
+Returns an array of every file/folder found directly inside the given
+folder path, each with its name and type ("File" or "Folder").
 
- {
-	"exists": true,
-	"effectiveIntegrationRuntime": "AutoResolveIntegrationRuntime (East US)",
-	"executionDuration": 2,
-	"durationInQueue": {
-		"integrationRuntimeQueue": 0
-	},
-	"billingReference": {
-		"activityType": "PipelineActivity",
-		"billableDuration": [
-			{
-				"meterType": "AzureIR",
-				"duration": 0.016666666666666666,
-				"unit": "Hours"
-			}
-		]
-	}
-} 
-3. Item Name
-4. Item Type 
-5. last modified
+
+2. EXISTS
+{
+    "exists": true,
+    "effectiveIntegrationRuntime": "AutoResolveIntegrationRuntime (East US)",
+    "executionDuration": 2,
+    "durationInQueue": { "integrationRuntimeQueue": 0 },
+    "billingReference": {
+        "activityType": "PipelineActivity",
+        "billableDuration": [
+            { "meterType": "AzureIR", "duration": 0.016666666666666666, "unit": "Hours" }
+        ]
+    }
+}
+
+Returns a simple true/false telling you whether the file or folder at
+that exact path actually exists. Useful for validation checks before
+the rest of a pipeline runs (e.g. "only proceed if this file exists,
+otherwise skip/fail gracefully").
+
+
+3. ITEM NAME
+{
+    "itemName": "dump-ssd-files",
+    "effectiveIntegrationRuntime": "AutoResolveIntegrationRuntime (East US)",
+    "executionDuration": 2,
+    "durationInQueue": { "integrationRuntimeQueue": 0 },
+    "billingReference": {
+        "activityType": "PipelineActivity",
+        "billableDuration": [
+            { "meterType": "AzureIR", "duration": 0.016666666666666666, "unit": "Hours" }
+        ]
+    }
+}
+
+Returns just the name of the specific file or folder your dataset
+points to (used when the dataset points to ONE specific
+file/folder, not a whole folder of many items like childItems does).
+
+
+4. ITEM TYPE
+{
+    "itemType": "Folder",
+    "effectiveIntegrationRuntime": "AutoResolveIntegrationRuntime (East US)",
+    "executionDuration": 0,
+    "durationInQueue": { "integrationRuntimeQueue": 0 },
+    "billingReference": {
+        "activityType": "PipelineActivity",
+        "billableDuration": [
+            { "meterType": "AzureIR", "duration": 0.016666666666666666, "unit": "Hours" }
+        ]
+    }
+}
+
+Returns whether the given path is a "File" or a "Folder". Useful for
+branching logic (e.g. "if this is a Folder, do X; if it's a File, do
+Y").
+
+
+5. LAST MODIFIED
+{
+    "lastModified": "2026-08-27T11:18:33Z",
+    "effectiveIntegrationRuntime": "AutoResolveIntegrationRuntime (East US)",
+    "executionDuration": 1,
+    "durationInQueue": { "integrationRuntimeQueue": 10 },
+    "billingReference": {
+        "activityType": "PipelineActivity",
+        "billableDuration": [
+            { "meterType": "AzureIR", "duration": 0.016666666666666666, "unit": "Hours" }
+        ]
+    }
+}
+
+Returns the timestamp (in UTC, ISO 8601 format) of when the file/
+folder was last modified. Useful for incremental-load pipelines - e.g.
+"only process files modified after the last pipeline run".
