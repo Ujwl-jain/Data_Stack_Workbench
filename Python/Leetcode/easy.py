@@ -121,4 +121,38 @@ class Solution(object):
         # because we skip the last character and we have to intentionally to do
         n = n + dict_roman[s[-1]]
         return n
-        
+
+
+'''
+Write a function to find the longest common prefix string amongst an array of strings.
+
+If there is no common prefix, return an empty string "".
+
+ 
+
+Example 1:
+
+Input: strs = ["flower","flow","flight"]
+Output: "fl"
+Example 2:
+
+Input: strs = ["dog","racecar","car"]
+Output: ""
+Explanation: There is no common prefix among the input strings.
+'''
+class Solution(object):
+    def longestCommonPrefix(self, strs):
+        """
+        :type strs: List[str]
+        :rtype: str
+        """
+        st = list(zip(*strs))
+        pref = []
+        for i in st:
+            if len(set(i)) == 1:
+                pref.append(i[0])
+            else:
+                break
+
+        return ''.join(pref)
+            
